@@ -24,7 +24,7 @@ interface OverlayState {
   setAnchor: (r: DOMRect | null) => void;
   toggleCard: () => void;
   startImprove: () => Promise<void>;
-  acceptImprove: () => void;
+  acceptImprove: () => Promise<void>;
   dismissImprove: () => void;
 }
 
@@ -59,16 +59,23 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
     }
   },
 
-  acceptImprove: () => {
+  acceptImprove: async () => {
     const { editor, improve } = get();
     if (!editor || !improve.text) return;
     if (!setEditorText(editor, improve.text)) {
-      void navigator.clipboard.writeText(improve.text).catch(() => {});
+      let copied = true;
+      try {
+        await navigator.clipboard.writeText(improve.text);
+      } catch {
+        copied = false;
+      }
       set({
         improve: {
           ...improve,
           status: 'error',
-          error: "Couldn't replace the text – improved prompt copied to clipboard. Paste to use it.",
+          error: copied
+            ? "Couldn't replace the text — improved prompt copied to clipboard. Paste to use it."
+            : "Couldn't replace the text automatically. Copy the improved prompt manually.",
         },
       });
       return;
