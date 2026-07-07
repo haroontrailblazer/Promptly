@@ -4,6 +4,10 @@ export function getEditorText(el: HTMLElement): string {
   return el.innerText ?? el.textContent ?? '';
 }
 
+// Rich editors normalize whitespace/newlines on insert, so success is judged
+// on whitespace-collapsed equality, not strict equality.
+const normalizeWs = (s: string) => s.replace(/\s+/g, ' ').trim();
+
 export function setEditorText(el: HTMLElement, text: string): boolean {
   if (el instanceof HTMLTextAreaElement) {
     // React and friends track the value property — go through the native
@@ -26,7 +30,7 @@ export function setEditorText(el: HTMLElement, text: string): boolean {
     selection.removeAllRanges();
     selection.addRange(range);
     const ok = document.execCommand('insertText', false, text);
-    return ok && getEditorText(el).trim().length > 0;
+    return ok && normalizeWs(getEditorText(el)) === normalizeWs(text);
   } catch {
     return false;
   }
