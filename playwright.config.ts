@@ -6,6 +6,7 @@ export default defineConfig({
   webServer: {
     command: 'node scripts/fixture-server.mjs',
     port: 4173,
-    reuseExistingServer: true,
+    // Reuse a dev server locally, but fail fast on a stale port squatter in CI.
+    reuseExistingServer: !process.env.CI,
   },
 });
