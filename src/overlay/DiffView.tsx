@@ -5,7 +5,13 @@ export function DiffView({ original, improved }: { original: string; improved: s
   return (
     <div className="pl-diff">
       {parts.map((p, i) =>
-        p.op === 1 ? <ins key={i}>{p.text}</ins> : p.op === -1 ? <del key={i}>{p.text}</del> : <span key={i}>{p.text}</span>,
+        p.op === 1 ? (
+          <ins key={i}>{p.text}</ins>
+        ) : p.op === -1 ? (
+          <del key={i}>{p.text}</del>
+        ) : (
+          <span key={i}>{p.text}</span>
+        ),
       )}
     </div>
   );

@@ -9,7 +9,9 @@ const PLACEHOLDER_RE = /ask|message|prompt|chat|anything|describe|instruction/i;
 function nearSendButton(el: HTMLElement): boolean {
   let node: HTMLElement | null = el;
   for (let depth = 0; node && depth < 4; depth++) {
-    const buttons = node.querySelectorAll<HTMLElement>('button, [role="button"], input[type="submit"]');
+    const buttons = node.querySelectorAll<HTMLElement>(
+      'button, [role="button"], input[type="submit"]',
+    );
     for (const b of buttons) {
       const name = `${b.getAttribute('aria-label') ?? ''} ${b.textContent ?? ''} ${b.getAttribute('value') ?? ''}`;
       if (SEND_RE.test(name)) return true;

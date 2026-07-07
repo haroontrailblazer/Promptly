@@ -8,8 +8,25 @@ export interface CheckContext {
 }
 
 const STOPWORDS = new Set([
-  'a', 'an', 'the', 'please', 'can', 'you', 'could', 'would', 'me', 'my', 'i',
-  'to', 'for', 'of', 'and', 'just', 'hi', 'hey', 'hello',
+  'a',
+  'an',
+  'the',
+  'please',
+  'can',
+  'you',
+  'could',
+  'would',
+  'me',
+  'my',
+  'i',
+  'to',
+  'for',
+  'of',
+  'and',
+  'just',
+  'hi',
+  'hey',
+  'hello',
 ]);
 
 export function words(text: string): string[] {
@@ -18,6 +35,11 @@ export function words(text: string): string[] {
 
 export function meaningfulWords(text: string): string[] {
   return words(text)
-    .map((w) => w.toLowerCase().replace(/[^\p{L}\p{N}#+.-]/gu, '').replace(/^[.-]+|[.-]+$/g, ''))
+    .map((w) =>
+      w
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}#+.-]/gu, '')
+        .replace(/^[.-]+|[.-]+$/g, ''),
+    )
     .filter((w) => w && !STOPWORDS.has(w));
 }

@@ -10,19 +10,28 @@ import { checkToolReadiness } from '../../src/analyzer/checks/toolReadiness';
 import { checkMultiStep } from '../../src/analyzer/checks/multiStep';
 
 function ctx(text: string): CheckContext {
-  return { text, allWords: words(text), meaningful: meaningfulWords(text), taskType: detectTaskType(text) };
+  return {
+    text,
+    allWords: words(text),
+    meaningful: meaningfulWords(text),
+    taskType: detectTaskType(text),
+  };
 }
 const ids = (f: { checkId: string }[]) => f.map((x) => x.checkId);
 
 describe('constraints', () => {
   it('flags coding prompts without a language/framework', () => {
-    expect(ids(checkConstraints(ctx('generate code for a login form')))).toContain('constraints-missing');
+    expect(ids(checkConstraints(ctx('generate code for a login form')))).toContain(
+      'constraints-missing',
+    );
   });
   it('passes coding prompts that name a stack', () => {
     expect(checkConstraints(ctx('generate a login form in React with TypeScript'))).toEqual([]);
   });
   it('flags writing prompts without length/tone/audience', () => {
-    expect(ids(checkConstraints(ctx('draft a blog article about remote work')))).toContain('constraints-missing');
+    expect(ids(checkConstraints(ctx('draft a blog article about remote work')))).toContain(
+      'constraints-missing',
+    );
   });
   it('skips general prompts', () => {
     expect(checkConstraints(ctx('hello there my friend'))).toEqual([]);
@@ -31,7 +40,9 @@ describe('constraints', () => {
 
 describe('output format', () => {
   it('flags artifact-producing prompts without a format', () => {
-    expect(ids(checkOutputFormat(ctx('summarize the quarterly report')))).toContain('format-missing');
+    expect(ids(checkOutputFormat(ctx('summarize the quarterly report')))).toContain(
+      'format-missing',
+    );
   });
   it('passes when a format is given', () => {
     expect(checkOutputFormat(ctx('summarize the quarterly report as a bullet list'))).toEqual([]);
@@ -43,10 +54,14 @@ describe('output format', () => {
 
 describe('success criteria', () => {
   it('flags substantial prompts without measurable criteria', () => {
-    expect(ids(checkSuccessCriteria(ctx('write a report about our onboarding funnel')))).toContain('success-missing');
+    expect(ids(checkSuccessCriteria(ctx('write a report about our onboarding funnel')))).toContain(
+      'success-missing',
+    );
   });
   it('passes when measurable criteria exist', () => {
-    expect(checkSuccessCriteria(ctx('write a 1000 words report that must include citations'))).toEqual([]);
+    expect(
+      checkSuccessCriteria(ctx('write a 1000 words report that must include citations')),
+    ).toEqual([]);
   });
 });
 
@@ -64,7 +79,9 @@ describe('role', () => {
 
 describe('tool readiness', () => {
   it('suggests web search for fresh-info prompts', () => {
-    expect(ids(checkToolReadiness(ctx('research the latest Nvidia earnings')))).toContain('tool-web-search');
+    expect(ids(checkToolReadiness(ctx('research the latest Nvidia earnings')))).toContain(
+      'tool-web-search',
+    );
   });
   it('reminds about attachments for file prompts', () => {
     expect(ids(checkToolReadiness(ctx('summarize this pdf')))).toContain('tool-file');
@@ -73,9 +90,9 @@ describe('tool readiness', () => {
 
 describe('multi-step', () => {
   it('suggests numbered steps for chained instructions', () => {
-    expect(ids(checkMultiStep(ctx('research Apple then compare with Microsoft then build a table')))).toContain(
-      'steps-unstructured',
-    );
+    expect(
+      ids(checkMultiStep(ctx('research Apple then compare with Microsoft then build a table'))),
+    ).toContain('steps-unstructured');
   });
   it('passes when steps are already numbered', () => {
     expect(checkMultiStep(ctx('1. research Apple\n2. compare with Microsoft'))).toEqual([]);

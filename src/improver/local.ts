@@ -12,7 +12,12 @@ const CONSTRAINT_HINT: Record<TaskType, string> = {
 function toNumberedSteps(prompt: string): string {
   const steps = prompt
     .split(/\b(?:and then|then|after that|afterwards|next,?|finally)\b/i)
-    .map((s) => s.trim().replace(/^[,.;]+|[,.;]+$/g, '').trim())
+    .map((s) =>
+      s
+        .trim()
+        .replace(/^[,.;]+|[,.;]+$/g, '')
+        .trim(),
+    )
     .filter(Boolean);
   if (steps.length < 2) return prompt.trim();
   return steps.map((s, i) => `${i + 1}. ${s}`).join('\n');
@@ -30,7 +35,9 @@ export function improveLocally(prompt: string, analysis: AnalysisResult): string
   if (has('constraints-missing')) out.push(`Constraints: ${CONSTRAINT_HINT[analysis.taskType]}`);
   if (has('format-missing')) out.push('Output format: [bullet list / table / JSON / markdown]');
   if (has('success-missing')) {
-    out.push('Success criteria: [what must be true for this to be done well – length, sections, examples]');
+    out.push(
+      'Success criteria: [what must be true for this to be done well – length, sections, examples]',
+    );
   }
   return out.join('\n\n');
 }

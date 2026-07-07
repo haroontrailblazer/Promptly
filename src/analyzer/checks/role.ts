@@ -9,7 +9,8 @@ export const ROLE_BY_TASK: Record<TaskType, string> = {
   general: 'an expert assistant',
 };
 
-const ROLE_RE = /\b(act as|you are|you're an?|as an? (expert|senior|professional)|take the role|persona of)\b/i;
+const ROLE_RE =
+  /\b(act as|you are|you're an?|as an? (expert|senior|professional)|take the role|persona of)\b/i;
 
 export const checkRole: Check = (ctx) => {
   if (ctx.taskType === 'general' || ROLE_RE.test(ctx.text)) return [];

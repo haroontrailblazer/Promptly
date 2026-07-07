@@ -17,7 +17,11 @@ export function App() {
 
   return (
     <div className={`pl-layer${dark ? ' pl-dark' : ''}`}>
-      <Badge score={analysis.score.overall} style={{ left: badgeLeft, top: badgeTop }} onClick={toggleCard} />
+      <Badge
+        score={analysis.score.overall}
+        style={{ left: badgeLeft, top: badgeTop }}
+        onClick={toggleCard}
+      />
       {cardOpen && (
         <Card
           style={{

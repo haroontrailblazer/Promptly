@@ -23,9 +23,10 @@ export const COMPONENT_LABELS: Record<Component, string> = {
 };
 
 export function scorePrompt(findings: Finding[], meaningfulCount: number): ScoreResult {
-  const components = Object.fromEntries(
-    Object.keys(WEIGHTS).map((c) => [c, 100]),
-  ) as Record<Component, number>;
+  const components = Object.fromEntries(Object.keys(WEIGHTS).map((c) => [c, 100])) as Record<
+    Component,
+    number
+  >;
 
   for (const f of findings) {
     components[f.component] = Math.max(0, components[f.component] - DEDUCTION[f.severity]);

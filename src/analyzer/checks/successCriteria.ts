@@ -13,7 +13,8 @@ export const checkSuccessCriteria: Check = (ctx) => {
       component: 'aiReadiness',
       severity: 'info',
       message: 'No success criteria',
-      suggestion: 'Define what "done well" means: length, required sections, examples, must-includes.',
+      suggestion:
+        'Define what "done well" means: length, required sections, examples, must-includes.',
     },
   ];
 };

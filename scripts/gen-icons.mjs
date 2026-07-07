@@ -21,7 +21,9 @@ function chunk(type, data) {
   return Buffer.concat([len, body, crc]);
 }
 // 8x8 pixel "P" glyph, violet background, white glyph.
-const GLYPH = [0b01111100, 0b01000010, 0b01000010, 0b01111100, 0b01000000, 0b01000000, 0b01000000, 0b00000000];
+const GLYPH = [
+  0b01111100, 0b01000010, 0b01000010, 0b01111100, 0b01000000, 0b01000000, 0b01000000, 0b00000000,
+];
 function png(size) {
   const bg = [124, 58, 237, 255];
   const fg = [255, 255, 255, 255];

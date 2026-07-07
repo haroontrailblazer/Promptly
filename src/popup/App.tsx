@@ -35,7 +35,9 @@ export default function App() {
 
   const toggleCloud = async (on: boolean) => {
     if (on) {
-      const granted = await chrome.permissions.request({ origins: ['https://api.anthropic.com/*'] });
+      const granted = await chrome.permissions.request({
+        origins: ['https://api.anthropic.com/*'],
+      });
       if (!granted) return;
     }
     await patch({ cloudEnabled: on });

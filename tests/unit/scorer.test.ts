@@ -3,7 +3,11 @@ import { scorePrompt } from '../../src/scorer';
 import type { Finding } from '../../src/shared/types';
 
 const finding = (component: Finding['component'], severity: Finding['severity']): Finding => ({
-  checkId: 'x', component, severity, message: '', suggestion: '',
+  checkId: 'x',
+  component,
+  severity,
+  message: '',
+  suggestion: '',
 });
 
 describe('scorePrompt', () => {

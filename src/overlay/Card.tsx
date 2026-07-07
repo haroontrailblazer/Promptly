@@ -6,7 +6,8 @@ import { DiffView } from './DiffView';
 import type { Component } from '../shared/types';
 
 export function Card({ style }: { style: CSSProperties }) {
-  const { analysis, editor, improve, startImprove, acceptImprove, dismissImprove } = useOverlayStore();
+  const { analysis, editor, improve, startImprove, acceptImprove, dismissImprove } =
+    useOverlayStore();
   if (!analysis) return null;
 
   const showDiff = improve.status !== 'idle' && improve.text !== undefined;
@@ -28,14 +29,18 @@ export function Card({ style }: { style: CSSProperties }) {
           <DiffView original={editor ? getEditorText(editor) : ''} improved={improve.text ?? ''} />
           {improve.error && <div className="pl-error">{improve.error}</div>}
           <div className="pl-actions">
-            <button className="pl-dismiss" onClick={dismissImprove}>Dismiss</button>
+            <button className="pl-dismiss" onClick={dismissImprove}>
+              Dismiss
+            </button>
             <button
               className="pl-copy"
               onClick={() => void navigator.clipboard.writeText(improve.text ?? '').catch(() => {})}
             >
               Copy
             </button>
-            <button className="pl-accept" onClick={acceptImprove}>Accept</button>
+            <button className="pl-accept" onClick={acceptImprove}>
+              Accept
+            </button>
           </div>
         </>
       ) : (
@@ -44,7 +49,10 @@ export function Card({ style }: { style: CSSProperties }) {
             <div className="pl-bar-row" key={key}>
               <span className="pl-bar-label">{label}</span>
               <span className="pl-bar">
-                <span className="pl-bar-fill" style={{ width: `${analysis.score.components[key]}%` }} />
+                <span
+                  className="pl-bar-fill"
+                  style={{ width: `${analysis.score.components[key]}%` }}
+                />
               </span>
             </div>
           ))}
@@ -54,7 +62,9 @@ export function Card({ style }: { style: CSSProperties }) {
               <span>{f.suggestion}</span>
             </div>
           ))}
-          {analysis.findings.length === 0 && <div className="pl-spin">Looks great — nothing to suggest.</div>}
+          {analysis.findings.length === 0 && (
+            <div className="pl-spin">Looks great — nothing to suggest.</div>
+          )}
         </>
       )}
     </div>

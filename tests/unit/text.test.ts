@@ -4,7 +4,12 @@ import { words, meaningfulWords } from '../../src/analyzer/text';
 describe('text utils', () => {
   it('splits words on whitespace', () => {
     expect(words('  write a   blog post\nabout cats ')).toEqual([
-      'write', 'a', 'blog', 'post', 'about', 'cats',
+      'write',
+      'a',
+      'blog',
+      'post',
+      'about',
+      'cats',
     ]);
   });
 

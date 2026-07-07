@@ -8,7 +8,12 @@ import { checkAmbiguity } from '../../src/analyzer/checks/ambiguity';
 import { checkObjective } from '../../src/analyzer/checks/objective';
 
 function ctx(text: string): CheckContext {
-  return { text, allWords: words(text), meaningful: meaningfulWords(text), taskType: detectTaskType(text) };
+  return {
+    text,
+    allWords: words(text),
+    meaningful: meaningfulWords(text),
+    taskType: detectTaskType(text),
+  };
 }
 
 const ids = (findings: { checkId: string }[]) => findings.map((f) => f.checkId);
@@ -24,7 +29,11 @@ describe('clarity', () => {
   });
   it('passes a specific prompt', () => {
     expect(
-      checkClarity(ctx('Write a 500-word product description for a solar-powered camping lantern aimed at hikers')),
+      checkClarity(
+        ctx(
+          'Write a 500-word product description for a solar-powered camping lantern aimed at hikers',
+        ),
+      ),
     ).toEqual([]);
   });
 });
@@ -35,13 +44,17 @@ describe('context', () => {
     expect(ids(checkContext(ctx('summarize it for me')))).toContain('context-deictic');
   });
   it('does not flag when the reference names its object', () => {
-    expect(checkContext(ctx('Analyze this quarterly sales report and highlight anomalies'))).toEqual([]);
+    expect(
+      checkContext(ctx('Analyze this quarterly sales report and highlight anomalies')),
+    ).toEqual([]);
   });
 });
 
 describe('ambiguity', () => {
   it('flags vague quantifiers', () => {
-    expect(ids(checkAmbiguity(ctx('give me some ideas and a few examples')))).toContain('ambiguity-quantifier');
+    expect(ids(checkAmbiguity(ctx('give me some ideas and a few examples')))).toContain(
+      'ambiguity-quantifier',
+    );
   });
   it('flags unresolved either/or', () => {
     expect(ids(checkAmbiguity(ctx('write it in Python or JavaScript')))).toContain('ambiguity-or');
@@ -53,7 +66,9 @@ describe('ambiguity', () => {
 
 describe('objective', () => {
   it('flags prompts with no actionable verb or question', () => {
-    expect(ids(checkObjective(ctx('the quarterly report situation')))).toContain('objective-missing');
+    expect(ids(checkObjective(ctx('the quarterly report situation')))).toContain(
+      'objective-missing',
+    );
   });
   it('accepts imperative prompts', () => {
     expect(checkObjective(ctx('Summarize the attached PDF'))).toEqual([]);

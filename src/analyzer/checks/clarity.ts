@@ -22,7 +22,8 @@ export const checkClarity: Check = (ctx) => {
       component: 'clarity',
       severity: 'warn',
       message: 'Vague action word without specifics',
-      suggestion: 'Replace vague verbs like "make/fix/improve" with a concrete, measurable request.',
+      suggestion:
+        'Replace vague verbs like "make/fix/improve" with a concrete, measurable request.',
     });
   }
   return findings;

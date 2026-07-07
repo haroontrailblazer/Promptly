@@ -8,8 +8,11 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('cloudImprove', () => {
   it('POSTs to the Anthropic Messages API and returns the rewritten text', async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(JSON.stringify({ content: [{ type: 'text', text: 'improved prompt' }] }), { status: 200 }),
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ content: [{ type: 'text', text: 'improved prompt' }] }), {
+          status: 200,
+        }),
     );
     vi.stubGlobal('fetch', fetchMock);
 
@@ -27,7 +30,10 @@ describe('cloudImprove', () => {
   });
 
   it('throws a readable error on non-2xx', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 401 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: 401 })),
+    );
     await expect(cloudImprove('x', settings)).rejects.toThrow(/401/);
   });
 

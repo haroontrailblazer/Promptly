@@ -12,7 +12,8 @@ export const checkObjective: Check = (ctx) => {
       component: 'objective',
       severity: 'high',
       message: 'No clear objective',
-      suggestion: 'State what the AI should accomplish, e.g. "Summarize…", "Generate…", "Compare…".',
+      suggestion:
+        'State what the AI should accomplish, e.g. "Summarize…", "Generate…", "Compare…".',
     },
   ];
 };

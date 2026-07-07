@@ -4,7 +4,8 @@ const CODING =
   /\b(code|coding|website|web app|webapp|function|bug|debug|refactor|api|script|program|class|component|endpoint|sql|regex|unit test|typescript|python|javascript|java|c\+\+|c#|rust|golang|implement|compile|deploy)\b/i;
 const RESEARCH =
   /\b(research|find out|look up|latest|news|market|trends|sources|investigate|statistics)\b/i;
-const ANALYSIS = /\b(analy[sz]e|evaluate|assess|interpret|examine|breakdown|insights|metrics|data)\b/i;
+const ANALYSIS =
+  /\b(analy[sz]e|evaluate|assess|interpret|examine|breakdown|insights|metrics|data)\b/i;
 const WRITING =
   /\b(write|draft|essay|blog|article|email|post|copy|story|report|letter|caption|headline|rewrite|summar\w*)\b/i;
 

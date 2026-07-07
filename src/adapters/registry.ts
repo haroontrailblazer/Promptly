@@ -13,7 +13,8 @@ export const ADAPTERS: SiteAdapter[] = [
   { hosts: ['claude.ai'], editorSelector: 'div.ProseMirror[contenteditable="true"]' },
   {
     hosts: ['gemini.google.com'],
-    editorSelector: 'rich-textarea div[contenteditable="true"], div[contenteditable="true"][role="textbox"]',
+    editorSelector:
+      'rich-textarea div[contenteditable="true"], div[contenteditable="true"][role="textbox"]',
   },
   {
     hosts: ['perplexity.ai', 'www.perplexity.ai'],

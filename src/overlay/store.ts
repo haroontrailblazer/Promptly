@@ -55,7 +55,13 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
       if (res.ok) set({ improve: { status: 'ready', text: res.improved } });
       else set({ improve: { status: 'error', text: local, error: res.error } });
     } catch {
-      set({ improve: { status: 'error', text: local, error: 'Cloud rewrite unavailable – showing local improvement.' } });
+      set({
+        improve: {
+          status: 'error',
+          text: local,
+          error: 'Cloud rewrite unavailable – showing local improvement.',
+        },
+      });
     }
   },
 

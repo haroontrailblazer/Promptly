@@ -29,8 +29,7 @@ const CHECKS: Check[] = [
 const MAX_ANALYZE = 20_000;
 
 export function analyzePrompt(raw: string): AnalysisResult {
-  const text =
-    raw.length > MAX_ANALYZE ? `${raw.slice(0, 15_000)}\n${raw.slice(-5_000)}` : raw;
+  const text = raw.length > MAX_ANALYZE ? `${raw.slice(0, 15_000)}\n${raw.slice(-5_000)}` : raw;
   const taskType = detectTaskType(text);
   const ctx: CheckContext = {
     text,
