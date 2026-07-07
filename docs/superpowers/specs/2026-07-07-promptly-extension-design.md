@@ -27,7 +27,7 @@ Promptly is a Chromium (Manifest V3) browser extension that acts like Grammarly,
 
 **Chosen: Approach A — self-contained content script with Shadow DOM overlay.**
 
-- One content script runs on allowlisted domains. It detects the prompt input, runs the analyzer **in-page** as pure synchronous TypeScript, and renders the UI as a React app inside a **closed Shadow DOM** host (`<promptly-root>`), so site CSS cannot bleed in and Promptly styles cannot leak out.
+- One content script runs on allowlisted domains. It detects the prompt input, runs the analyzer **in-page** as pure synchronous TypeScript, and renders the UI as a React app inside a **Shadow DOM** host (`<promptly-root>`, `mode: 'open'`), so site CSS cannot bleed in and Promptly styles cannot leak out. (Open, not closed: the shadow boundary provides the style isolation either way, and Playwright cannot pierce closed roots, which would make the overlay untestable end-to-end.)
 - The background service worker handles only: cloud rewrite API calls (the API key never enters page context), the `chrome.commands` keyboard shortcut, and storage default initialization.
 - The popup is a small React app reading/writing `chrome.storage.local`.
 
@@ -51,7 +51,7 @@ Text replacement respects the editor type: native value setter + dispatched `inp
 
 ## 4. Repository layout
 
-Single Vite + React + TypeScript package, built with `@crxjs/vite-plugin` (MV3 multi-entry + HMR). Zustand for popup/overlay state, Tailwind CSS compiled into the shadow-root stylesheet, `diff-match-patch` for diffs.
+Single Vite + React + TypeScript package, built with `@crxjs/vite-plugin` (MV3 multi-entry + HMR). Zustand for popup/overlay state, Tailwind CSS for the popup UI, hand-rolled scoped CSS injected into the shadow root for the overlay (Tailwind v4's `:root`-scoped theme variables and `@property` rules are unreliable inside shadow roots), `diff-match-patch` for diffs.
 
 ```
 src/
