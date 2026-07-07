@@ -128,7 +128,7 @@ Both paths feed the same diff view. Accept replaces the editor text; Copy puts t
 
 ## 9. Overlay UX
 
-- **Badge:** ~28 px circle showing the current score, anchored to the prompt input's bottom-right corner (fixed-position layer, repositioned on scroll/resize via rAF-throttled updates — never affects page layout). Hidden until the input has focus and ≥ 1 character.
+- **Badge:** ~28 px circle showing the current score, anchored to the prompt input's bottom-right corner (fixed-position layer, repositioned on scroll/resize via rAF-throttled updates — never affects page layout). Hidden until the input has ≥ 1 character; once analysis produces a score it stays visible while the prompt is non-empty (strict focus-gating would dismiss the badge on the very click that opens the card).
 - **Card:** opens on badge click or Ctrl+Shift+P. Shows overall score, per-component bars, grouped suggestions, and the Improve button. Improve switches the card to the diff view.
 - **Theme:** follows `prefers-color-scheme`, overridable in settings. All styles live inside the shadow root.
 
@@ -142,7 +142,7 @@ Both paths feed the same diff view. Accept replaces the editor text; Copy puts t
   disabledSites: string[];     // hostnames
   theme: 'system' | 'light' | 'dark';
   cloudEnabled: boolean;       // default false
-  apiKey?: string;             // only read by background
+  apiKey?: string;             // network use only in background; stripped before content-script state
   model: string;               // default 'claude-sonnet-5'
 }
 ```
