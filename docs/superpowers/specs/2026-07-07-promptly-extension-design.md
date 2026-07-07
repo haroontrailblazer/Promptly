@@ -151,7 +151,7 @@ Keys for history/templates/profiles are reserved but unused in v0.1. Typed messa
 
 ## 11. Privacy
 
-No analytics, no server, no telemetry. Prompt text never leaves the machine except when the user has (a) enabled cloud optimization, (b) granted the API host permission, and (c) clicked Improve. The API key is stored locally and only the background worker reads it.
+No analytics, no server, no telemetry. Prompt text never leaves the machine except when the user has (a) enabled cloud optimization, (b) granted the API host permission, and (c) clicked Improve. The API key is stored locally; only the background worker uses it for network calls (the popup manages it as a masked settings field and never touches the network).
 
 ## 12. Error handling
 
