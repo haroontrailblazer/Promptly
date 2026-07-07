@@ -96,7 +96,7 @@ Ten pure, synchronous check functions. Each returns zero or more findings: `{ ch
 4. **Missing output format** — no format signal (list, table, JSON, markdown, word count, code block) on an artifact-producing task.
 5. **Ambiguity** — pronouns without antecedents, vague quantifiers ("some", "a few", "several"), unresolved either/or.
 6. **Objective** — no actionable verb or stated goal detected → suggest stating what the AI should accomplish.
-7. **Success criteria** — substantial task with no measurable acceptance signal (counts, formats, conditions).
+7. **Success criteria** — substantial task (≥ 12 words, or any artifact-producing task) with no measurable acceptance signal (counts, formats, conditions).
 8. **Role** — no "act as…" / "you are…" persona on a task that benefits from one → suggest a role matched to the detected task type.
 9. **Tool readiness** — research/current-events cues ("latest", "research", "news", a company/ticker) → suggest enabling web search; file mentions → suggest attaching the file.
 10. **Multi-step** — sequence connectives ("then", "after that", "finally", chains of imperative verbs) → suggest numbered steps.
