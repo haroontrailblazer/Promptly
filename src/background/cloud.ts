@@ -15,6 +15,9 @@ export async function cloudImprove(prompt: string, settings: Settings): Promise<
       'content-type': 'application/json',
       'x-api-key': settings.apiKey,
       'anthropic-version': '2023-06-01',
+      // Extension service workers send an Origin header; the API requires this
+      // explicit opt-in for browser-originated BYO-key requests.
+      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
       model: settings.model,

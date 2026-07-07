@@ -28,6 +28,10 @@ interface OverlayState {
   dismissImprove: () => void;
 }
 
+// Bumped on dismiss/accept/new-improve so a late cloud response can't
+// resurrect a diff the user already acted on.
+let improveEpoch = 0;
+
 export const useOverlayStore = create<OverlayState>((set, get) => ({
   editor: null,
   settings: DEFAULT_SETTINGS,
@@ -45,6 +49,7 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
   startImprove: async () => {
     const { editor, analysis, settings } = get();
     if (!editor || !analysis) return;
+    const epoch = ++improveEpoch;
     const prompt = getEditorText(editor);
     const local = improveLocally(prompt, analysis);
     set({ improve: { status: settings.cloudEnabled ? 'loading' : 'ready', text: local } });
@@ -52,14 +57,16 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
     try {
       const req: BgRequest = { type: 'CLOUD_IMPROVE_REQUEST', prompt };
       const res = (await chrome.runtime.sendMessage(req)) as BgResponse;
+      if (epoch !== improveEpoch) return;
       if (res.ok) set({ improve: { status: 'ready', text: res.improved } });
       else set({ improve: { status: 'error', text: local, error: res.error } });
     } catch {
+      if (epoch !== improveEpoch) return;
       set({
         improve: {
           status: 'error',
           text: local,
-          error: 'Cloud rewrite unavailable – showing local improvement.',
+          error: 'Cloud rewrite unavailable — showing local improvement.',
         },
       });
     }
@@ -68,6 +75,7 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
   acceptImprove: async () => {
     const { editor, improve } = get();
     if (!editor || !improve.text) return;
+    improveEpoch++;
     if (!setEditorText(editor, improve.text)) {
       let copied = true;
       try {
@@ -75,9 +83,11 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
       } catch {
         copied = false;
       }
+      const current = get().improve;
+      if (current.text === undefined) return; // dismissed while copying — stay dismissed
       set({
         improve: {
-          ...improve,
+          ...current,
           status: 'error',
           error: copied
             ? "Couldn't replace the text — improved prompt copied to clipboard. Paste to use it."
@@ -89,5 +99,8 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
     set({ improve: { status: 'idle' }, cardOpen: false });
   },
 
-  dismissImprove: () => set({ improve: { status: 'idle' } }),
+  dismissImprove: () => {
+    improveEpoch++;
+    set({ improve: { status: 'idle' } });
+  },
 }));

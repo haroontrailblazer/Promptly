@@ -4,6 +4,7 @@ import { getEditorText } from './editor';
 import { getSettings, onSettingsChanged } from '../shared/storage';
 import { throttle } from '../shared/throttle';
 import type { TabMessage } from '../shared/messages';
+import type { Settings } from '../shared/types';
 import { mountOverlay } from '../overlay/mount';
 import { useOverlayStore } from '../overlay/store';
 
@@ -20,14 +21,22 @@ const guard = <T extends (...args: never[]) => void>(fn: T): T =>
     }
   }) as T;
 
+// The content script never talks to the network — keep the API key out of
+// third-party page processes entirely.
+const sanitizeSettings = (s: Settings): Settings => {
+  const clean = { ...s };
+  delete clean.apiKey;
+  return clean;
+};
+
 async function main(): Promise<void> {
   const settings = await getSettings();
   if (!settings.enabled || settings.disabledSites.includes(location.hostname)) return;
 
   mountOverlay();
   const store = useOverlayStore.getState();
-  store.setSettings(settings);
-  onSettingsChanged((s) => useOverlayStore.getState().setSettings(s));
+  store.setSettings(sanitizeSettings(settings));
+  onSettingsChanged(guard((s) => useOverlayStore.getState().setSettings(sanitizeSettings(s))));
 
   let editor: HTMLElement | null = null;
   let debounceTimer: number | undefined;

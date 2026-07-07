@@ -24,6 +24,7 @@ describe('cloudImprove', () => {
     const headers = init.headers as Record<string, string>;
     expect(headers['x-api-key']).toBe('sk-test');
     expect(headers['anthropic-version']).toBe('2023-06-01');
+    expect(headers['anthropic-dangerous-direct-browser-access']).toBe('true');
     const body = JSON.parse(init.body as string);
     expect(body.model).toBe('claude-sonnet-5');
     expect(body.messages[0].content).toBe('make website');

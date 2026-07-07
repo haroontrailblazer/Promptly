@@ -63,12 +63,18 @@ test('card opens with suggestions; Accept replaces textarea text', async () => {
   await page.close();
 });
 
-test('works on a contenteditable editor via the heuristic', async () => {
+test('improve and accept work on a contenteditable editor via the heuristic', async () => {
   const page = await context.newPage();
   await page.goto('http://localhost:4173/prosemirror.html');
   await page.click('#editor');
   await page.type('#editor', 'summarize it');
   await expect(page.locator('.pl-badge')).toBeVisible({ timeout: 5000 });
+  await page.locator('.pl-badge').click();
+  await expect(page.locator('.pl-card')).toBeVisible();
+  await page.locator('.pl-improve-btn').click();
+  await expect(page.locator('.pl-diff')).toBeVisible();
+  await page.locator('.pl-accept').click();
+  await expect(page.locator('#editor')).toContainText('Act as an experienced editor');
   await page.close();
 });
 
