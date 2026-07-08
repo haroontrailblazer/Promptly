@@ -40,6 +40,7 @@ async function main(): Promise<void> {
 
   let editor: HTMLElement | null = null;
   let debounceTimer: number | undefined;
+  let lastAnalyzed = '';
 
   const analyze = () => {
     // Runs inside timer/observer callbacks, which escape main().catch() —
@@ -47,6 +48,7 @@ async function main(): Promise<void> {
     try {
       if (!editor || !editor.isConnected) return;
       const text = getEditorText(editor).trim();
+      lastAnalyzed = text;
       const st = useOverlayStore.getState();
       if (!text) {
         st.setAnalysis(null);
@@ -66,12 +68,32 @@ async function main(): Promise<void> {
     debounceTimer = window.setTimeout(analyze, pasted ? 0 : DEBOUNCE_MS);
   });
 
-  const reanchor = throttle(
-    guard(() => {
-      if (editor?.isConnected) useOverlayStore.getState().setAnchor(editor.getBoundingClientRect());
-    }),
-    100,
-  );
+  // The composer moves constantly on chat sites (messages stream in above it,
+  // panels open, SPAs re-layout) without scroll/resize events — track its rect
+  // every frame and re-anchor only when it actually moved. rAF pauses
+  // automatically in background tabs.
+  const trackAnchor = () => {
+    try {
+      const st = useOverlayStore.getState();
+      if (editor?.isConnected && st.analysis) {
+        const r = editor.getBoundingClientRect();
+        const a = st.anchor;
+        if (
+          !a ||
+          a.top !== r.top ||
+          a.left !== r.left ||
+          a.right !== r.right ||
+          a.bottom !== r.bottom
+        ) {
+          st.setAnchor(r);
+        }
+      }
+    } catch {
+      /* never break the host page */
+    }
+    window.requestAnimationFrame(trackAnchor);
+  };
+  window.requestAnimationFrame(trackAnchor);
 
   const attach = (el: HTMLElement) => {
     if (el === editor) return;
@@ -96,11 +118,20 @@ async function main(): Promise<void> {
     1000,
   );
 
+  // Safety net: sites clear or rewrite editors programmatically (undo, send,
+  // regenerate) without firing input events — poll cheaply so the analysis
+  // always tracks what is actually in the editor, including full deletion.
+  window.setInterval(
+    guard(() => {
+      if (document.visibilityState !== 'visible' || !editor?.isConnected) return;
+      if (getEditorText(editor).trim() !== lastAnalyzed) analyze();
+    }),
+    600,
+  );
+
   detect();
   new MutationObserver(detect).observe(document.body, { childList: true, subtree: true });
   document.addEventListener('focusin', detect);
-  window.addEventListener('scroll', reanchor, { passive: true, capture: true });
-  window.addEventListener('resize', reanchor, { passive: true });
 
   chrome.runtime.onMessage.addListener(
     guard((msg: TabMessage) => {

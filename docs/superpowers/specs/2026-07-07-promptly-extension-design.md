@@ -39,8 +39,11 @@ Promptly is a Chromium (Manifest V3) browser extension that acts like Grammarly,
 ### Data flow
 
 ```
-keystroke → 300 ms idle debounce → analyzer (sync, local) → findings
+keystroke → 200 ms idle debounce → analyzer (sync, local) → findings
         → scorer → overlay (badge + suggestion card)
+paste → analyzed immediately (no debounce)
+600 ms poll → re-analyzes when the host app rewrites/clears the editor
+              programmatically (no input event), incl. hiding on deletion
 
 Improve click → local rewriter (instant, shown as diff)
              → [if cloud enabled] background → Claude API → diff updates

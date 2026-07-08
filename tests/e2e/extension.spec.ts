@@ -92,6 +92,52 @@ test('pasted prompts score immediately (no typing debounce)', async () => {
   await page.close();
 });
 
+test('tracks programmatic rewrites and deletion without input events', async () => {
+  const page = await context.newPage();
+  await page.goto('http://localhost:4173/textarea.html');
+  await typePrompt(page, '#chat', 'make website');
+  const scoreChip = page.locator('.pl-score');
+  await expect(scoreChip).toBeVisible({ timeout: 5000 });
+  const weak = Number(await scoreChip.textContent());
+
+  // The host app rewrites the editor directly — no input event fires.
+  await page.evaluate(() => {
+    (document.getElementById('chat') as HTMLTextAreaElement).value =
+      'Act as a senior software engineer. Build a landing page in React with TypeScript. Output format: a single code block. It must include at least 3 sections.';
+  });
+  await expect(async () => {
+    expect(Number(await scoreChip.textContent())).toBeGreaterThan(weak);
+  }).toPass({ timeout: 3000 });
+
+  // The host app clears the editor (e.g. after send) — badge must disappear.
+  await page.evaluate(() => {
+    (document.getElementById('chat') as HTMLTextAreaElement).value = '';
+  });
+  await expect(page.locator('.pl-badge')).toBeHidden({ timeout: 3000 });
+  await page.close();
+});
+
+test('badge follows the editor when the page layout shifts', async () => {
+  const page = await context.newPage();
+  await page.goto('http://localhost:4173/textarea.html');
+  await typePrompt(page, '#chat', 'make website');
+  await expect(page.locator('.pl-badge')).toBeVisible({ timeout: 5000 });
+  const before = await page.locator('.pl-badge-wrap').boundingBox();
+
+  // The host app re-layouts (e.g. messages stream in above the composer) —
+  // no scroll or resize event fires, but the editor moves.
+  await page.evaluate(() => {
+    const main = document.querySelector('main') as HTMLElement;
+    main.style.flex = 'none';
+    main.style.height = '120px';
+  });
+  await expect(async () => {
+    const after = await page.locator('.pl-badge-wrap').boundingBox();
+    expect(after!.y).not.toBe(before!.y);
+  }).toPass({ timeout: 2000 });
+  await page.close();
+});
+
 test('stays dormant on non-matched origins', async () => {
   const page = await context.newPage();
   // 127.0.0.1 is not in the e2e manifest matches (only localhost is)
