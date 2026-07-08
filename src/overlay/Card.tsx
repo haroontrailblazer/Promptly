@@ -10,18 +10,27 @@ export function Card({ style }: { style: CSSProperties }) {
     useOverlayStore();
   if (!analysis) return null;
 
+  const score = analysis.score.overall;
+  const band = score >= 80 ? 'pl-good' : score >= 50 ? 'pl-mid' : 'pl-low';
+  const bandLabel = score >= 80 ? 'Strong' : score >= 50 ? 'Okay' : 'Weak';
   const showDiff = improve.status !== 'idle' && improve.text !== undefined;
 
   return (
     <div className="pl-card" style={style}>
-      <h1>
-        <span>Prompt Score: {analysis.score.overall}</span>
+      <div className="pl-head">
+        <div>
+          <div className="pl-kicker">Prompt score</div>
+          <div className="pl-score-big">
+            {score}
+            <span className={`pl-band ${band}`}>{bandLabel}</span>
+          </div>
+        </div>
         {!showDiff && (
           <button className="pl-improve-btn" onClick={() => void startImprove()}>
             Improve
           </button>
         )}
-      </h1>
+      </div>
 
       {showDiff ? (
         <>
@@ -45,6 +54,7 @@ export function Card({ style }: { style: CSSProperties }) {
         </>
       ) : (
         <>
+          <div className="pl-sec">Breakdown</div>
           {(Object.entries(COMPONENT_LABELS) as [Component, string][]).map(([key, label]) => (
             <div className="pl-bar-row" key={key}>
               <span className="pl-bar-label">{label}</span>
@@ -56,6 +66,7 @@ export function Card({ style }: { style: CSSProperties }) {
               </span>
             </div>
           ))}
+          {analysis.findings.length > 0 && <div className="pl-sec">Suggestions</div>}
           {analysis.findings.map((f) => (
             <div className="pl-suggestion" key={f.checkId}>
               <b>{f.message}</b>
@@ -63,7 +74,7 @@ export function Card({ style }: { style: CSSProperties }) {
             </div>
           ))}
           {analysis.findings.length === 0 && (
-            <div className="pl-spin">Looks great — nothing to suggest.</div>
+            <div className="pl-empty">Looks great — nothing to suggest.</div>
           )}
         </>
       )}

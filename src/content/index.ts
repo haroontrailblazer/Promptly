@@ -8,7 +8,7 @@ import type { Settings } from '../shared/types';
 import { mountOverlay } from '../overlay/mount';
 import { useOverlayStore } from '../overlay/store';
 
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 200;
 
 // Callbacks below run outside main()'s promise chain — contain errors so a
 // Promptly failure never breaks the host page.
@@ -59,9 +59,11 @@ async function main(): Promise<void> {
     }
   };
 
-  const onInput = guard(() => {
+  const onInput = guard((e: Event) => {
     window.clearTimeout(debounceTimer);
-    debounceTimer = window.setTimeout(analyze, DEBOUNCE_MS);
+    // Pasted prompts should score immediately — only keystrokes are debounced.
+    const pasted = (e as InputEvent).inputType === 'insertFromPaste';
+    debounceTimer = window.setTimeout(analyze, pasted ? 0 : DEBOUNCE_MS);
   });
 
   const reanchor = throttle(

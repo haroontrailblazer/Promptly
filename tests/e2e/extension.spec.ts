@@ -25,9 +25,9 @@ test('badge appears with a low score for a weak prompt (textarea)', async () => 
   const page = await context.newPage();
   await page.goto('http://localhost:4173/textarea.html');
   await typePrompt(page, '#chat', 'make website');
-  const badge = page.locator('.pl-badge');
-  await expect(badge).toBeVisible({ timeout: 5000 });
-  expect(Number(await badge.textContent())).toBeLessThan(50);
+  await expect(page.locator('.pl-badge')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('.pl-badge')).toHaveText('P');
+  expect(Number(await page.locator('.pl-score').textContent())).toBeLessThan(50);
   await page.close();
 });
 
@@ -35,16 +35,16 @@ test('score rises as the prompt improves', async () => {
   const page = await context.newPage();
   await page.goto('http://localhost:4173/textarea.html');
   await typePrompt(page, '#chat', 'make website');
-  const badge = page.locator('.pl-badge');
-  await expect(badge).toBeVisible();
-  const weak = Number(await badge.textContent());
+  const scoreChip = page.locator('.pl-score');
+  await expect(scoreChip).toBeVisible();
+  const weak = Number(await scoreChip.textContent());
   await typePrompt(
     page,
     '#chat',
     'Act as a senior software engineer. Build a landing page in React with TypeScript. Output format: a single code block. It must include at least 3 sections.',
   );
   await expect(async () => {
-    expect(Number(await badge.textContent())).toBeGreaterThan(weak);
+    expect(Number(await scoreChip.textContent())).toBeGreaterThan(weak);
   }).toPass({ timeout: 5000 });
   await page.close();
 });
@@ -59,7 +59,7 @@ test('card opens with suggestions; Accept replaces textarea text', async () => {
   await page.locator('.pl-improve-btn').click();
   await expect(page.locator('.pl-diff')).toBeVisible();
   await page.locator('.pl-accept').click();
-  await expect(page.locator('#chat')).toHaveValue(/Act as a senior software engineer/);
+  await expect(page.locator('#chat')).toHaveValue(/Act as a senior front-end engineer/);
   await page.close();
 });
 
@@ -75,6 +75,20 @@ test('improve and accept work on a contenteditable editor via the heuristic', as
   await expect(page.locator('.pl-diff')).toBeVisible();
   await page.locator('.pl-accept').click();
   await expect(page.locator('#editor')).toContainText('Act as an experienced editor');
+  await page.close();
+});
+
+test('pasted prompts score immediately (no typing debounce)', async () => {
+  const page = await context.newPage();
+  await page.goto('http://localhost:4173/textarea.html');
+  await page.click('#chat');
+  await page.evaluate(() => {
+    const ta = document.getElementById('chat') as HTMLTextAreaElement;
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!;
+    setter.call(ta, 'make website');
+    ta.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste' }));
+  });
+  await expect(page.locator('.pl-score')).toBeVisible({ timeout: 1500 });
   await page.close();
 });
 

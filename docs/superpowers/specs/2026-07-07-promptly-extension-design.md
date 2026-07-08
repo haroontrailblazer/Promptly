@@ -121,14 +121,14 @@ Prompts under 4 words cap the overall score at 40. Badge color bands: red < 50, 
 
 ## 8. Improver
 
-- **Local (default, instant):** deterministic template assembly. Preserves the user's original wording verbatim as the task core; prepends a role line if missing; appends labeled sections (Context / Constraints / Output format / Success criteria) only for detected gaps; converts detected step sequences into a numbered list. Values the rewriter cannot know are emitted as bracketed placeholders (e.g. `[language/framework]`) for the user to fill in the diff view. It never invents facts.
+- **Local (default, instant):** deterministic, prompt-tailored assembly (v0.2). Topic profiles (web, backend, automation, email, blog, academic, market research, data) refine the coarse task type into a specific role and topic-specific Constraints/Output-format hints; vague opener verbs on weak prompts are sharpened ("make website" → "Build website"); labeled sections (Context / Constraints / Output format / Success criteria) are appended only for detected gaps; detected step sequences become a numbered list. Values the rewriter cannot know are emitted as bracketed placeholders for the user to fill in the diff view. It never invents facts, and strong prompts pass through untouched.
 - **Cloud (opt-in, BYO key):** background service worker calls the Anthropic Messages API (`claude-sonnet-5`, temperature 0.2, max_tokens 1024, 15 s timeout) with a system prompt: rewrite the prompt to be clear, complete, and well-structured while preserving the user's intent and facts; return only the rewritten prompt. `https://api.anthropic.com/` is an **optional host permission**, requested at the moment the user enables cloud optimization in settings. Errors (bad key, rate limit, timeout, permission denied) surface inline in the card; the local rewrite remains available.
 
 Both paths feed the same diff view. Accept replaces the editor text; Copy puts the improved prompt on the clipboard; Dismiss closes. Never auto-applied.
 
 ## 9. Overlay UX
 
-- **Badge:** ~28 px circle showing the current score, anchored to the prompt input's bottom-right corner (fixed-position layer, repositioned on scroll/resize via rAF-throttled updates — never affects page layout). Hidden until the input has ≥ 1 character; once analysis produces a score it stays visible while the prompt is non-empty (strict focus-gating would dismiss the badge on the very click that opens the card).
+- **Badge (v0.2):** Grammarly-style frosted-glass "P" monogram (34 px circle, backdrop blur, monochrome — adapts to the browser theme with the popup's manual override winning) with a small attached score chip colored by band (red < 50, amber 50–79, green ≥ 80). Anchored to the prompt input's bottom-right corner (fixed-position layer — never affects page layout). Hidden until the input has ≥ 1 character; once analysis produces a score it stays visible while the prompt is non-empty. Typed input is debounced 200 ms; pasted input analyzes immediately.
 - **Card:** opens on badge click or Ctrl+Shift+P. Shows overall score, per-component bars, grouped suggestions, and the Improve button. Improve switches the card to the diff view.
 - **Theme:** follows `prefers-color-scheme`, overridable in settings. All styles live inside the shadow root.
 

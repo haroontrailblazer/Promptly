@@ -7,15 +7,18 @@ interface Props {
 }
 
 export function Badge({ score, style, onClick }: Props) {
-  const band = score >= 80 ? 'pl-green' : score >= 50 ? 'pl-amber' : 'pl-red';
+  const band = score >= 80 ? 'pl-good' : score >= 50 ? 'pl-mid' : 'pl-low';
   return (
-    <button
-      className={`pl-badge ${band}`}
-      style={style}
-      onClick={onClick}
-      title="Promptly — prompt score"
-    >
-      {score}
-    </button>
+    <div className="pl-badge-wrap" style={style}>
+      <button
+        className="pl-badge"
+        onClick={onClick}
+        title={`Promptly — prompt score ${score}`}
+        aria-label={`Promptly, prompt score ${score}. Open suggestions.`}
+      >
+        P
+      </button>
+      <span className={`pl-score ${band}`}>{score}</span>
+    </div>
   );
 }
