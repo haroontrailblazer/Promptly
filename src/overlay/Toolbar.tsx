@@ -28,6 +28,25 @@ function Sparkle() {
   );
 }
 
+function Book() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="15"
+      height="15"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  );
+}
+
 // Pretty-Prompt-style pill toolbar anchored above the prompt input.
 export function Toolbar({ style }: { style: CSSProperties }) {
   const { analysis, openPanel, startImprove } = useOverlayStore();
@@ -58,6 +77,14 @@ export function Toolbar({ style }: { style: CSSProperties }) {
         onClick={improveNow}
       >
         <Sparkle />
+      </button>
+      <button
+        className="pl-tool pl-library-btn"
+        title="Prompt Library"
+        aria-label="Open the prompt library"
+        onClick={() => openPanel('library')}
+      >
+        <Book />
       </button>
       {score !== null && (
         <button

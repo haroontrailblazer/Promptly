@@ -5,7 +5,7 @@ import { NO_PROVIDER, type BgRequest, type BgResponse } from '../shared/messages
 import { improveSmart } from '../improver/smart';
 import { getEditorText, setEditorText } from '../content/editor';
 
-export type PanelTab = 'improve' | 'refine' | 'breakdown';
+export type PanelTab = 'improve' | 'refine' | 'breakdown' | 'library' | 'account';
 
 export interface ImproveState {
   status: 'idle' | 'ready' | 'loading' | 'error';
@@ -25,6 +25,9 @@ interface OverlayState {
   tab: PanelTab;
   panelPos: { x: number; y: number } | null;
   improve: ImproveState;
+  account: string | null;
+  setAccount: (email: string | null) => void;
+  applyText: (text: string) => Promise<void>;
   setEditor: (el: HTMLElement | null) => void;
   setSettings: (s: Settings) => void;
   setAnalysis: (a: AnalysisResult | null) => void;
@@ -53,6 +56,24 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
   tab: 'improve',
   panelPos: null,
   improve: { status: 'idle' },
+  account: null,
+
+  setAccount: (account) => set({ account }),
+
+  // Used by the library's Apply: put a stored prompt into the editor.
+  applyText: async (text) => {
+    const { editor } = get();
+    if (!editor || !text.trim()) return;
+    improveEpoch++;
+    if (!setEditorText(editor, text)) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        /* nothing else we can do from here */
+      }
+    }
+    set({ cardOpen: false, improve: { status: 'idle' } });
+  },
 
   setEditor: (editor) => set({ editor }),
   setSettings: (settings) => set({ settings }),

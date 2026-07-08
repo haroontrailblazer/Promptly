@@ -30,6 +30,14 @@ export interface AnalysisResult {
   taskType: TaskType;
 }
 
+export interface LibraryPrompt {
+  id: string;
+  title: string;
+  text: string;
+  category?: string;
+  createdAt: number;
+}
+
 export interface Settings {
   enabled: boolean;
   disabledSites: string[];

@@ -9,11 +9,11 @@ export default defineManifest((env) => ({
   icons: { 16: 'icons/16.png', 32: 'icons/32.png', 48: 'icons/48.png', 128: 'icons/128.png' },
   action: { default_popup: 'src/popup/index.html' },
   options_ui: { page: 'src/popup/index.html', open_in_tab: true },
-  background: { service_worker: 'src/background/index.ts', type: 'module' },
+  background: { service_worker: 'src/background/service-worker.ts', type: 'module' },
   content_scripts: [
     {
       matches: env.mode === 'e2e' ? [...ALLOWED_MATCHES, 'http://localhost/*'] : ALLOWED_MATCHES,
-      js: ['src/content/index.ts'],
+      js: ['src/content/main.ts'],
       run_at: 'document_idle',
     },
   ],

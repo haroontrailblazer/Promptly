@@ -5,7 +5,7 @@ import { Card } from './Card';
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
-const TOOLBAR_W = 150;
+const TOOLBAR_W = 182;
 
 export function App() {
   const { anchor, cardOpen, settings, panelPos } = useOverlayStore();

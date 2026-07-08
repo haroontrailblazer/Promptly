@@ -1,9 +1,15 @@
-import { useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useEffect,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { useOverlayStore, type PanelTab } from './store';
 import { COMPONENT_LABELS } from '../scorer';
 import { getEditorText } from '../content/editor';
 import { DiffView } from './DiffView';
 import { PMark } from './Toolbar';
+import { AccountView, LibraryView } from './Library';
 import type { Component } from '../shared/types';
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
@@ -12,7 +18,35 @@ const TABS: { id: PanelTab; label: string }[] = [
   { id: 'improve', label: '✨ Improve' },
   { id: 'refine', label: 'Refine' },
   { id: 'breakdown', label: 'Breakdown' },
+  { id: 'library', label: 'Library' },
 ];
+
+const STEPS = [
+  '✨ Improving prompt…',
+  '⚡ Optimising for this site…',
+  '🧠 Looking for ambiguities…',
+  '🪄 Optimising for clarity…',
+  '🚀 Applying best practices…',
+  '🧹 Cleaning up…',
+];
+
+function ProgressSteps() {
+  const [n, setN] = useState(1);
+  useEffect(() => {
+    const t = window.setInterval(() => setN((v) => Math.min(v + 1, STEPS.length)), 650);
+    return () => window.clearInterval(t);
+  }, []);
+  return (
+    <div className="pl-steps">
+      {STEPS.slice(0, n).map((s) => (
+        <div className="pl-step" key={s}>
+          <span className="pl-step-dot" />
+          {s}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function Card({ style }: { style: CSSProperties }) {
   const {
@@ -20,6 +54,7 @@ export function Card({ style }: { style: CSSProperties }) {
     editor,
     improve,
     tab,
+    account,
     setTab,
     closePanel,
     setPanelPos,
@@ -73,7 +108,7 @@ export function Card({ style }: { style: CSSProperties }) {
 
   const resultView = (
     <>
-      {improve.status === 'loading' && <div className="pl-spin">Working on your prompt…</div>}
+      {improve.status === 'loading' && <ProgressSteps />}
       {hasResult &&
         (unchanged ? (
           <div className="pl-empty">Your prompt is already strong — nothing to change.</div>
@@ -121,14 +156,23 @@ export function Card({ style }: { style: CSSProperties }) {
             </button>
           ))}
         </div>
-        <button
-          className="pl-close"
-          title="Close"
-          aria-label="Close Promptly panel"
-          onClick={closePanel}
-        >
-          ×
-        </button>
+        <div className="pl-head-right">
+          <button
+            className={`pl-account${tab === 'account' ? ' pl-tab-active' : ''}`}
+            title={account ? `Signed in as ${account}` : 'Sign in to sync your library'}
+            onClick={() => setTab('account')}
+          >
+            {account ? account[0].toUpperCase() : 'Sign in'}
+          </button>
+          <button
+            className="pl-close"
+            title="Close"
+            aria-label="Close Promptly panel"
+            onClick={closePanel}
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       {tab === 'improve' &&
@@ -206,6 +250,9 @@ export function Card({ style }: { style: CSSProperties }) {
         ) : (
           emptyState
         ))}
+
+      {tab === 'library' && <LibraryView />}
+      {tab === 'account' && <AccountView />}
     </div>
   );
 }

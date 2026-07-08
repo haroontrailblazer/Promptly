@@ -185,6 +185,32 @@
   color: var(--pl-fg);
   border-color: var(--pl-edge);
 }
+.pl-head-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pl-account {
+  height: 24px;
+  min-width: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid var(--pl-edge);
+  background: transparent;
+  color: var(--pl-muted);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.pl-account:hover,
+.pl-account.pl-tab-active {
+  color: var(--pl-fg);
+  border-color: var(--pl-fg);
+}
 .pl-close {
   width: 26px;
   height: 26px;
@@ -389,6 +415,102 @@
   border-radius: 3px;
   padding: 0 1px;
   opacity: 0.8;
+}
+
+.pl-steps {
+  padding: 6px 0;
+}
+.pl-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  margin: 7px 0;
+  animation: pl-in 0.25s ease;
+}
+.pl-step-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pl-good);
+  flex: none;
+}
+
+.pl-lib-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.pl-lib-search {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--pl-track);
+  border: 1px solid var(--pl-edge);
+  border-radius: 10px;
+  color: var(--pl-fg);
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 8px 12px;
+  outline: none;
+  margin-bottom: 8px;
+  transition: border-color 0.15s ease;
+}
+.pl-lib-search:focus {
+  border-color: var(--pl-fg);
+}
+.pl-lib-search::placeholder {
+  color: var(--pl-muted);
+}
+.pl-lib-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--pl-track);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--pl-fg);
+  font-family: inherit;
+  padding: 8px 10px;
+  margin: 6px 0;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.pl-lib-row:hover {
+  border-color: var(--pl-edge);
+}
+.pl-lib-row b {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.pl-lib-row span {
+  display: block;
+  color: var(--pl-muted);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pl-lib-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.pl-lib-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--pl-track);
+  border: 1px solid var(--pl-edge);
+  border-radius: 12px;
+  padding: 12px;
+  max-height: 34vh;
+  overflow-y: auto;
+  font-size: 12.5px;
+}
+.pl-lib-new {
+  min-height: 110px;
 }
 
 .pl-empty-state {

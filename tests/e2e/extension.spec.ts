@@ -85,7 +85,7 @@ test('panel has Improve/Refine/Breakdown tabs and a refine instruction box', asy
   await expect(page.locator('.pl-badge')).toBeVisible({ timeout: 5000 });
   await page.locator('.pl-badge').click();
   await expect(page.locator('.pl-card')).toBeVisible();
-  await expect(page.locator('.pl-tab')).toHaveCount(3);
+  await expect(page.locator('.pl-tab')).toHaveCount(4); // Improve/Refine/Breakdown/Library
   await page.locator('.pl-tab', { hasText: 'Refine' }).click();
   await expect(page.locator('.pl-refine-input')).toBeVisible();
   await page.close();
@@ -149,6 +149,37 @@ test('badge follows the editor when the page layout shifts', async () => {
     const after = await page.locator('.pl-badge-wrap').boundingBox();
     expect(after!.y).not.toBe(before!.y);
   }).toPass({ timeout: 2000 });
+  await page.close();
+});
+
+test('library: sign-in pill, public prompts, detail, and apply', async () => {
+  const page = await context.newPage();
+  await page.goto('http://localhost:4173/textarea.html');
+  await page.click('#chat');
+  await expect(page.locator('.pl-library-btn')).toBeVisible({ timeout: 5000 });
+  await page.locator('.pl-library-btn').click();
+  await expect(page.locator('.pl-card')).toBeVisible();
+  await expect(page.locator('.pl-account')).toHaveText('Sign in');
+  await expect(page.locator('.pl-empty-state')).toBeVisible(); // fresh personal library
+  await page.locator('.pl-tab', { hasText: 'Public' }).click();
+  await expect(page.locator('.pl-lib-row').first()).toBeVisible();
+  await page.locator('.pl-lib-row', { hasText: 'New-Hire Onboarding Deck' }).click();
+  await expect(page.locator('.pl-lib-text')).toBeVisible();
+  await page.locator('.pl-accept').click();
+  await expect(page.locator('#chat')).toHaveValue(/new-hire onboarding deck/i);
+  await page.close();
+});
+
+test('library: save current prompt into the personal library', async () => {
+  const page = await context.newPage();
+  await page.goto('http://localhost:4173/textarea.html');
+  await typePrompt(page, '#chat', 'my favorite research prompt about markets');
+  await expect(page.locator('.pl-library-btn')).toBeVisible({ timeout: 5000 });
+  await page.locator('.pl-library-btn').click();
+  await page.locator('.pl-accept', { hasText: 'Save current prompt' }).click();
+  await expect(
+    page.locator('.pl-lib-row', { hasText: 'my favorite research prompt' }),
+  ).toBeVisible();
   await page.close();
 });
 
