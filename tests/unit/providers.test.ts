@@ -29,6 +29,20 @@ describe('openaiImprove', () => {
   it('throws without a key', async () => {
     await expect(openaiImprove('x', DEFAULT_SETTINGS)).rejects.toThrow(/key/i);
   });
+
+  it('threads the refinement instruction into the system prompt', async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ choices: [{ message: { content: 'x' } }] }), {
+          status: 200,
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    await openaiImprove('p', { ...DEFAULT_SETTINGS, openaiKey: 'k' }, 'make it formal');
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(init.body as string);
+    expect(body.messages[0].content).toContain('make it formal');
+  });
 });
 
 describe('ollamaImprove', () => {

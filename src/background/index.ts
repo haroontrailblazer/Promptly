@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener(
     void (async () => {
       try {
         const settings = await getSettings();
-        const improved = await improveWithBestProvider(msg.prompt, settings);
+        const improved = await improveWithBestProvider(msg.prompt, settings, msg.instruction);
         sendResponse({ type: 'CLOUD_IMPROVE_RESULT', ok: true, improved });
       } catch (e) {
         sendResponse({

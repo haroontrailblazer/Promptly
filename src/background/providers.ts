@@ -1,8 +1,12 @@
 import type { Settings } from '../shared/types';
 import { NO_PROVIDER } from '../shared/messages';
-import { cloudImprove, SYSTEM_PROMPT } from './cloud';
+import { cloudImprove, buildSystemPrompt } from './cloud';
 
-export async function openaiImprove(prompt: string, settings: Settings): Promise<string> {
+export async function openaiImprove(
+  prompt: string,
+  settings: Settings,
+  instruction?: string,
+): Promise<string> {
   if (!settings.openaiKey) throw new Error('No OpenAI key configured');
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -15,7 +19,7 @@ export async function openaiImprove(prompt: string, settings: Settings): Promise
       temperature: 0.2,
       max_tokens: 1024,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: buildSystemPrompt(instruction) },
         { role: 'user', content: prompt },
       ],
     }),
@@ -30,7 +34,11 @@ export async function openaiImprove(prompt: string, settings: Settings): Promise
 
 const OLLAMA = 'http://localhost:11434';
 
-export async function ollamaImprove(prompt: string, settings: Settings): Promise<string> {
+export async function ollamaImprove(
+  prompt: string,
+  settings: Settings,
+  instruction?: string,
+): Promise<string> {
   let model = settings.ollamaModel;
   if (!model) {
     const tags = await fetch(`${OLLAMA}/api/tags`, { signal: AbortSignal.timeout(1500) });
@@ -47,7 +55,7 @@ export async function ollamaImprove(prompt: string, settings: Settings): Promise
       stream: false,
       options: { temperature: 0.2 },
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: buildSystemPrompt(instruction) },
         { role: 'user', content: prompt },
       ],
     }),
@@ -67,9 +75,15 @@ export async function ollamaImprove(prompt: string, settings: Settings): Promise
  * its own toggle (localhost — nothing leaves the machine).
  * Throws NO_PROVIDER when nothing is configured.
  */
-export async function improveWithBestProvider(prompt: string, settings: Settings): Promise<string> {
-  if (settings.cloudEnabled && settings.apiKey) return cloudImprove(prompt, settings);
-  if (settings.cloudEnabled && settings.openaiKey) return openaiImprove(prompt, settings);
-  if (settings.ollamaEnabled) return ollamaImprove(prompt, settings);
+export async function improveWithBestProvider(
+  prompt: string,
+  settings: Settings,
+  instruction?: string,
+): Promise<string> {
+  if (settings.cloudEnabled && settings.apiKey) return cloudImprove(prompt, settings, instruction);
+  if (settings.cloudEnabled && settings.openaiKey) {
+    return openaiImprove(prompt, settings, instruction);
+  }
+  if (settings.ollamaEnabled) return ollamaImprove(prompt, settings, instruction);
   throw new Error(NO_PROVIDER);
 }

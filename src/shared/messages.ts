@@ -1,5 +1,6 @@
 export type BgRequest =
-  { type: 'CLOUD_IMPROVE_REQUEST'; prompt: string } | { type: 'OPEN_OPTIONS' };
+  | { type: 'CLOUD_IMPROVE_REQUEST'; prompt: string; instruction?: string }
+  | { type: 'OPEN_OPTIONS' };
 
 export type BgResponse =
   | { type: 'CLOUD_IMPROVE_RESULT'; ok: true; improved: string }

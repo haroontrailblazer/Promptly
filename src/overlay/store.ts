@@ -5,6 +5,8 @@ import { NO_PROVIDER, type BgRequest, type BgResponse } from '../shared/messages
 import { improveSmart } from '../improver/smart';
 import { getEditorText, setEditorText } from '../content/editor';
 
+export type PanelTab = 'improve' | 'refine' | 'breakdown';
+
 export interface ImproveState {
   status: 'idle' | 'ready' | 'loading' | 'error';
   text?: string;
@@ -20,18 +22,25 @@ interface OverlayState {
   analysis: AnalysisResult | null;
   anchor: DOMRect | null;
   cardOpen: boolean;
+  tab: PanelTab;
+  panelPos: { x: number; y: number } | null;
   improve: ImproveState;
   setEditor: (el: HTMLElement | null) => void;
   setSettings: (s: Settings) => void;
   setAnalysis: (a: AnalysisResult | null) => void;
   setAnchor: (r: DOMRect | null) => void;
   toggleCard: () => void;
+  openPanel: (tab: PanelTab) => void;
+  closePanel: () => void;
+  setTab: (tab: PanelTab) => void;
+  setPanelPos: (pos: { x: number; y: number } | null) => void;
   startImprove: () => Promise<void>;
+  refine: (instruction: string) => Promise<void>;
   acceptImprove: () => Promise<void>;
   dismissImprove: () => void;
 }
 
-// Bumped on dismiss/accept/new-improve so a late cloud response can't
+// Bumped on dismiss/accept/new-improve so a late AI response can't
 // resurrect a diff the user already acted on.
 let improveEpoch = 0;
 
@@ -41,6 +50,8 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
   analysis: null,
   anchor: null,
   cardOpen: false,
+  tab: 'improve',
+  panelPos: null,
   improve: { status: 'idle' },
 
   setEditor: (editor) => set({ editor }),
@@ -48,6 +59,10 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
   setAnalysis: (analysis) => set({ analysis }),
   setAnchor: (anchor) => set({ anchor }),
   toggleCard: () => set((s) => ({ cardOpen: !s.cardOpen })),
+  openPanel: (tab) => set({ cardOpen: true, tab }),
+  closePanel: () => set({ cardOpen: false }),
+  setTab: (tab) => set({ tab }),
+  setPanelPos: (panelPos) => set({ panelPos }),
 
   startImprove: async () => {
     const { editor, analysis, settings } = get();
@@ -80,6 +95,41 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
           error: 'AI rewrite unavailable — showing the built-in improvement.',
         },
       });
+    }
+  },
+
+  refine: async (instruction) => {
+    const { editor, settings } = get();
+    if (!editor || !instruction.trim()) return;
+    const prompt = getEditorText(editor);
+    if (!prompt.trim()) return;
+    if (!settings.cloudEnabled && !settings.ollamaEnabled) {
+      set({
+        improve: {
+          status: 'error',
+          error: 'Refine needs an AI provider — add an API key or enable Ollama (⋯).',
+        },
+      });
+      return;
+    }
+    const epoch = ++improveEpoch;
+    set({ improve: { status: 'loading' } });
+    try {
+      const req: BgRequest = { type: 'CLOUD_IMPROVE_REQUEST', prompt, instruction };
+      const res = (await chrome.runtime.sendMessage(req)) as BgResponse;
+      if (epoch !== improveEpoch) return;
+      if (res.ok) set({ improve: { status: 'ready', text: res.improved } });
+      else if (res.error === NO_PROVIDER) {
+        set({
+          improve: {
+            status: 'error',
+            error: 'Refine needs an AI provider — add an API key or enable Ollama (⋯).',
+          },
+        });
+      } else set({ improve: { status: 'error', error: res.error } });
+    } catch {
+      if (epoch !== improveEpoch) return;
+      set({ improve: { status: 'error', error: 'AI refine unavailable — try again.' } });
     }
   },
 

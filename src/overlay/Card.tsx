@@ -1,103 +1,211 @@
-import type { CSSProperties } from 'react';
-import { useOverlayStore } from './store';
+import { useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { useOverlayStore, type PanelTab } from './store';
 import { COMPONENT_LABELS } from '../scorer';
 import { getEditorText } from '../content/editor';
 import { DiffView } from './DiffView';
+import { PMark } from './Toolbar';
 import type { Component } from '../shared/types';
 
-export function Card({ style }: { style: CSSProperties }) {
-  const { analysis, editor, improve, startImprove, acceptImprove, dismissImprove } =
-    useOverlayStore();
-  if (!analysis) return null;
+const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
-  const score = analysis.score.overall;
-  const band = score >= 80 ? 'pl-good' : score >= 50 ? 'pl-mid' : 'pl-low';
-  const bandLabel = score >= 80 ? 'Strong' : score >= 50 ? 'Okay' : 'Weak';
-  const showDiff = improve.status !== 'idle' && improve.text !== undefined;
+const TABS: { id: PanelTab; label: string }[] = [
+  { id: 'improve', label: '✨ Improve' },
+  { id: 'refine', label: 'Refine' },
+  { id: 'breakdown', label: 'Breakdown' },
+];
+
+export function Card({ style }: { style: CSSProperties }) {
+  const {
+    analysis,
+    editor,
+    improve,
+    tab,
+    setTab,
+    closePanel,
+    setPanelPos,
+    startImprove,
+    refine,
+    acceptImprove,
+    dismissImprove,
+  } = useOverlayStore();
+  const [instruction, setInstruction] = useState('');
+
   const original = editor ? getEditorText(editor) : '';
-  const unchanged = showDiff && (improve.text ?? '').trim() === original.trim();
-  const openSettings = () =>
-    void chrome.runtime.sendMessage({ type: 'OPEN_OPTIONS' }).catch(() => {});
+  const hasResult = improve.status !== 'idle' && improve.text !== undefined;
+  const unchanged = hasResult && (improve.text ?? '').trim() === original.trim();
+  const score = analysis?.score.overall ?? null;
+  const band = score === null ? '' : score >= 80 ? 'pl-good' : score >= 50 ? 'pl-mid' : 'pl-low';
+  const bandLabel = score === null ? '' : score >= 80 ? 'Strong' : score >= 50 ? 'Okay' : 'Weak';
+
+  const selectTab = (t: PanelTab) => {
+    setTab(t);
+    if (t === 'improve' && improve.status === 'idle') void startImprove();
+  };
+
+  // The whole header drags the panel (buttons excluded).
+  const onHeaderDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    const panel = (e.currentTarget as HTMLElement).closest('.pl-card') as HTMLElement;
+    const rect = panel.getBoundingClientRect();
+    const dx = e.clientX - rect.left;
+    const dy = e.clientY - rect.top;
+    const move = (ev: PointerEvent) =>
+      setPanelPos({
+        x: clamp(ev.clientX - dx, 4, window.innerWidth - rect.width - 4),
+        y: clamp(ev.clientY - dy, 4, window.innerHeight - 48),
+      });
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    e.preventDefault();
+  };
+
+  const emptyState = (
+    <div className="pl-empty-state">
+      <PMark size={26} />
+      <b>No prompt found</b>
+      <span>Start writing your prompt, then click ✨ Improve.</span>
+    </div>
+  );
+
+  const resultView = (
+    <>
+      {improve.status === 'loading' && <div className="pl-spin">Working on your prompt…</div>}
+      {hasResult &&
+        (unchanged ? (
+          <div className="pl-empty">Your prompt is already strong — nothing to change.</div>
+        ) : (
+          <DiffView original={original} improved={improve.text ?? ''} />
+        ))}
+      {improve.error && <div className="pl-error">{improve.error}</div>}
+      {improve.note && !unchanged && <div className="pl-note">{improve.note}</div>}
+      {hasResult && (
+        <div className="pl-actions">
+          <button className="pl-dismiss" onClick={dismissImprove}>
+            Dismiss
+          </button>
+          {!unchanged && (
+            <>
+              <button
+                className="pl-copy"
+                onClick={() =>
+                  void navigator.clipboard.writeText(improve.text ?? '').catch(() => {})
+                }
+              >
+                Copy
+              </button>
+              <button className="pl-accept" onClick={acceptImprove}>
+                Accept
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </>
+  );
 
   return (
     <div className="pl-card" style={style}>
-      <div className="pl-head">
-        <div>
-          <div className="pl-kicker">Prompt score</div>
-          <div className="pl-score-big">
-            {score}
-            <span className={`pl-band ${band}`}>{bandLabel}</span>
-          </div>
-        </div>
-        <div className="pl-head-actions">
-          {!showDiff && (
-            <button className="pl-improve-btn" onClick={() => void startImprove()}>
-              Improve
+      <div className="pl-panel-head" onPointerDown={onHeaderDown}>
+        <div className="pl-tabs">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              className={`pl-tab${tab === t.id ? ' pl-tab-active' : ''}`}
+              onClick={() => selectTab(t.id)}
+            >
+              {t.label}
             </button>
-          )}
-          <button className="pl-menu" title="Promptly settings" onClick={openSettings}>
-            ⋯
-          </button>
+          ))}
         </div>
+        <button
+          className="pl-close"
+          title="Close"
+          aria-label="Close Promptly panel"
+          onClick={closePanel}
+        >
+          ×
+        </button>
       </div>
 
-      {showDiff ? (
-        <>
-          {improve.status === 'loading' && <div className="pl-spin">Improving with AI…</div>}
-          {unchanged ? (
-            <div className="pl-empty">Your prompt is already strong — nothing to change.</div>
-          ) : (
-            <DiffView original={original} improved={improve.text ?? ''} />
-          )}
-          {improve.error && <div className="pl-error">{improve.error}</div>}
-          {improve.note && !unchanged && <div className="pl-note">{improve.note}</div>}
-          <div className="pl-actions">
-            <button className="pl-dismiss" onClick={dismissImprove}>
-              Dismiss
+      {tab === 'improve' &&
+        (!analysis ? (
+          emptyState
+        ) : improve.status === 'idle' ? (
+          <div className="pl-empty-state">
+            <PMark size={26} />
+            <b>Ready to improve</b>
+            <span>Rewrite this prompt with structure, role, and constraints.</span>
+            <button className="pl-accept pl-run" onClick={() => void startImprove()}>
+              Improve now
             </button>
-            {!unchanged && (
-              <>
-                <button
-                  className="pl-copy"
-                  onClick={() =>
-                    void navigator.clipboard.writeText(improve.text ?? '').catch(() => {})
-                  }
-                >
-                  Copy
-                </button>
-                <button className="pl-accept" onClick={acceptImprove}>
-                  Accept
-                </button>
-              </>
-            )}
           </div>
-        </>
-      ) : (
+        ) : (
+          resultView
+        ))}
+
+      {tab === 'refine' && (
         <>
-          <div className="pl-sec">Breakdown</div>
-          {(Object.entries(COMPONENT_LABELS) as [Component, string][]).map(([key, label]) => (
-            <div className="pl-bar-row" key={key}>
-              <span className="pl-bar-label">{label}</span>
-              <span className="pl-bar">
-                <span
-                  className="pl-bar-fill"
-                  style={{ width: `${analysis.score.components[key]}%` }}
-                />
-              </span>
-            </div>
-          ))}
-          {analysis.findings.length > 0 && <div className="pl-sec">Suggestions</div>}
-          {analysis.findings.map((f) => (
-            <div className="pl-suggestion" key={f.checkId}>
-              <b>{f.message}</b>
-              <span>{f.suggestion}</span>
-            </div>
-          ))}
-          {analysis.findings.length === 0 && (
-            <div className="pl-empty">Looks great — nothing to suggest.</div>
+          {original.trim() ? (
+            <>
+              <textarea
+                className="pl-refine-input"
+                placeholder="Tell Promptly how to change this prompt — e.g. make it formal, add examples, shorten it…"
+                value={instruction}
+                onChange={(e) => setInstruction(e.target.value)}
+              />
+              <div className="pl-actions">
+                <button
+                  className="pl-accept pl-refine-btn"
+                  onClick={() => void refine(instruction)}
+                >
+                  Refine
+                </button>
+              </div>
+            </>
+          ) : (
+            emptyState
           )}
+          {resultView}
         </>
       )}
+
+      {tab === 'breakdown' &&
+        (analysis ? (
+          <>
+            <div className="pl-score-big">
+              {score}
+              <span className={`pl-band ${band}`}>{bandLabel}</span>
+            </div>
+            <div className="pl-sec">Breakdown</div>
+            {(Object.entries(COMPONENT_LABELS) as [Component, string][]).map(([key, label]) => (
+              <div className="pl-bar-row" key={key}>
+                <span className="pl-bar-label">{label}</span>
+                <span className="pl-bar">
+                  <span
+                    className="pl-bar-fill"
+                    style={{ width: `${analysis.score.components[key]}%` }}
+                  />
+                </span>
+              </div>
+            ))}
+            {analysis.findings.length > 0 && <div className="pl-sec">Suggestions</div>}
+            {analysis.findings.map((f) => (
+              <div className="pl-suggestion" key={f.checkId}>
+                <b>{f.message}</b>
+                <span>{f.suggestion}</span>
+              </div>
+            ))}
+            {analysis.findings.length === 0 && (
+              <div className="pl-empty">Looks great — nothing to suggest.</div>
+            )}
+          </>
+        ) : (
+          emptyState
+        ))}
     </div>
   );
 }

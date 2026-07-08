@@ -7,7 +7,17 @@ export const SYSTEM_PROMPT =
   'output format, numbered steps) only where it helps. Do not answer the prompt. ' +
   'Return ONLY the rewritten prompt text, with no preamble or explanation.';
 
-export async function cloudImprove(prompt: string, settings: Settings): Promise<string> {
+export function buildSystemPrompt(instruction?: string): string {
+  return instruction
+    ? `${SYSTEM_PROMPT}\nApply this refinement instruction from the user to the rewrite: ${instruction}`
+    : SYSTEM_PROMPT;
+}
+
+export async function cloudImprove(
+  prompt: string,
+  settings: Settings,
+  instruction?: string,
+): Promise<string> {
   if (!settings.apiKey) throw new Error('No API key configured');
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -23,7 +33,7 @@ export async function cloudImprove(prompt: string, settings: Settings): Promise<
       model: settings.model,
       max_tokens: 1024,
       temperature: 0.2,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(instruction),
       messages: [{ role: 'user', content: prompt }],
     }),
     signal: AbortSignal.timeout(15_000),

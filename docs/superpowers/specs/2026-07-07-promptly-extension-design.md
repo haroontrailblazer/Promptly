@@ -132,7 +132,7 @@ Both paths feed the same diff view. Accept replaces the editor text; Copy puts t
 ## 9. Overlay UX
 
 - **Badge (v0.2):** Grammarly-style frosted-glass "P" monogram (34 px circle, backdrop blur, monochrome — adapts to the browser theme with the popup's manual override winning) with a small attached score chip colored by band (red < 50, amber 50–79, green ≥ 80). Anchored to the prompt input's bottom-right corner (fixed-position layer — never affects page layout). Hidden until the input has ≥ 1 character; once analysis produces a score it stays visible while the prompt is non-empty. Typed input is debounced 200 ms; pasted input analyzes immediately.
-- **Card:** opens on badge click or Ctrl+Shift+P. Shows overall score, per-component bars, grouped suggestions, and the Improve button. Improve switches the card to the diff view.
+- **Toolbar & panel (v0.3, Pretty-Prompt-style):** a pill toolbar floats above the input's top-right corner whenever an editor is detected (even before typing): P mark (opens Breakdown), ✨ Improve (runs + opens panel), band-colored score chip, ⋯ (settings). The panel is draggable (header), closable (×), and tabbed: **Improve** (diff + Accept/Copy/Dismiss), **Refine** (free-text instruction applied by the AI provider chain — requires a provider), **Breakdown** (score, component bars, suggestions). Empty state ("No prompt found") when the input is empty. Ctrl+Shift+P toggles the panel.
 - **Theme:** follows `prefers-color-scheme`, overridable in settings. All styles live inside the shadow root.
 
 ## 10. Storage & messaging

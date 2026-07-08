@@ -78,6 +78,19 @@ test('improve and accept work on a contenteditable editor via the heuristic', as
   await page.close();
 });
 
+test('panel has Improve/Refine/Breakdown tabs and a refine instruction box', async () => {
+  const page = await context.newPage();
+  await page.goto('http://localhost:4173/textarea.html');
+  await typePrompt(page, '#chat', 'make website');
+  await expect(page.locator('.pl-badge')).toBeVisible({ timeout: 5000 });
+  await page.locator('.pl-badge').click();
+  await expect(page.locator('.pl-card')).toBeVisible();
+  await expect(page.locator('.pl-tab')).toHaveCount(3);
+  await page.locator('.pl-tab', { hasText: 'Refine' }).click();
+  await expect(page.locator('.pl-refine-input')).toBeVisible();
+  await page.close();
+});
+
 test('pasted prompts score immediately (no typing debounce)', async () => {
   const page = await context.newPage();
   await page.goto('http://localhost:4173/textarea.html');
@@ -109,11 +122,12 @@ test('tracks programmatic rewrites and deletion without input events', async () 
     expect(Number(await scoreChip.textContent())).toBeGreaterThan(weak);
   }).toPass({ timeout: 3000 });
 
-  // The host app clears the editor (e.g. after send) — badge must disappear.
+  // The host app clears the editor (e.g. after send) — the score chip must
+  // disappear (the toolbar itself stays, Pretty-Prompt style).
   await page.evaluate(() => {
     (document.getElementById('chat') as HTMLTextAreaElement).value = '';
   });
-  await expect(page.locator('.pl-badge')).toBeHidden({ timeout: 3000 });
+  await expect(page.locator('.pl-score')).toBeHidden({ timeout: 3000 });
   await page.close();
 });
 

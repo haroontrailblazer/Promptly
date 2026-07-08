@@ -76,7 +76,7 @@ async function main(): Promise<void> {
   const trackAnchor = () => {
     try {
       const st = useOverlayStore.getState();
-      if (editor?.isConnected && st.analysis) {
+      if (editor?.isConnected) {
         const r = editor.getBoundingClientRect();
         const a = st.anchor;
         if (
@@ -101,6 +101,7 @@ async function main(): Promise<void> {
     editor?.removeEventListener('input', onInput);
     editor = el;
     useOverlayStore.getState().setEditor(el);
+    useOverlayStore.getState().setAnchor(el.getBoundingClientRect());
     el.addEventListener('input', onInput);
     analyze();
   };
