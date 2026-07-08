@@ -11,8 +11,8 @@
   --pl-fg: #14161b;
   --pl-inverse: #ffffff;
   --pl-muted: rgba(20, 22, 27, 0.55);
-  --pl-glass: rgba(255, 255, 255, 0.6);
-  --pl-glass-strong: rgba(255, 255, 255, 0.78);
+  --pl-glass: rgba(255, 255, 255, 0.88);
+  --pl-glass-strong: rgba(255, 255, 255, 0.94);
   --pl-edge: rgba(20, 22, 27, 0.14);
   --pl-track: rgba(20, 22, 27, 0.08);
   --pl-shadow: 0 10px 30px rgba(10, 12, 16, 0.18), 0 2px 8px rgba(10, 12, 16, 0.1);
@@ -25,8 +25,8 @@
   --pl-fg: #f2f3f5;
   --pl-inverse: #14161b;
   --pl-muted: rgba(242, 243, 245, 0.55);
-  --pl-glass: rgba(24, 26, 32, 0.55);
-  --pl-glass-strong: rgba(24, 26, 32, 0.75);
+  --pl-glass: rgba(24, 26, 32, 0.85);
+  --pl-glass-strong: rgba(24, 26, 32, 0.92);
   --pl-edge: rgba(242, 243, 245, 0.16);
   --pl-track: rgba(242, 243, 245, 0.1);
   --pl-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
@@ -141,6 +141,38 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 12px;
+}
+.pl-head-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.pl-menu {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--pl-edge);
+  background: transparent;
+  color: var(--pl-muted);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.pl-menu:hover {
+  color: var(--pl-fg);
+  border-color: var(--pl-fg);
+}
+.pl-note {
+  color: var(--pl-muted);
+  font-size: 11.5px;
+  margin-top: 8px;
 }
 .pl-kicker {
   font-size: 10px;

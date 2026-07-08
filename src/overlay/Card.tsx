@@ -14,6 +14,10 @@ export function Card({ style }: { style: CSSProperties }) {
   const band = score >= 80 ? 'pl-good' : score >= 50 ? 'pl-mid' : 'pl-low';
   const bandLabel = score >= 80 ? 'Strong' : score >= 50 ? 'Okay' : 'Weak';
   const showDiff = improve.status !== 'idle' && improve.text !== undefined;
+  const original = editor ? getEditorText(editor) : '';
+  const unchanged = showDiff && (improve.text ?? '').trim() === original.trim();
+  const openSettings = () =>
+    void chrome.runtime.sendMessage({ type: 'OPEN_OPTIONS' }).catch(() => {});
 
   return (
     <div className="pl-card" style={style}>
@@ -25,31 +29,47 @@ export function Card({ style }: { style: CSSProperties }) {
             <span className={`pl-band ${band}`}>{bandLabel}</span>
           </div>
         </div>
-        {!showDiff && (
-          <button className="pl-improve-btn" onClick={() => void startImprove()}>
-            Improve
+        <div className="pl-head-actions">
+          {!showDiff && (
+            <button className="pl-improve-btn" onClick={() => void startImprove()}>
+              Improve
+            </button>
+          )}
+          <button className="pl-menu" title="Promptly settings" onClick={openSettings}>
+            ⋯
           </button>
-        )}
+        </div>
       </div>
 
       {showDiff ? (
         <>
-          {improve.status === 'loading' && <div className="pl-spin">Improving with cloud…</div>}
-          <DiffView original={editor ? getEditorText(editor) : ''} improved={improve.text ?? ''} />
+          {improve.status === 'loading' && <div className="pl-spin">Improving with AI…</div>}
+          {unchanged ? (
+            <div className="pl-empty">Your prompt is already strong — nothing to change.</div>
+          ) : (
+            <DiffView original={original} improved={improve.text ?? ''} />
+          )}
           {improve.error && <div className="pl-error">{improve.error}</div>}
+          {improve.note && !unchanged && <div className="pl-note">{improve.note}</div>}
           <div className="pl-actions">
             <button className="pl-dismiss" onClick={dismissImprove}>
               Dismiss
             </button>
-            <button
-              className="pl-copy"
-              onClick={() => void navigator.clipboard.writeText(improve.text ?? '').catch(() => {})}
-            >
-              Copy
-            </button>
-            <button className="pl-accept" onClick={acceptImprove}>
-              Accept
-            </button>
+            {!unchanged && (
+              <>
+                <button
+                  className="pl-copy"
+                  onClick={() =>
+                    void navigator.clipboard.writeText(improve.text ?? '').catch(() => {})
+                  }
+                >
+                  Copy
+                </button>
+                <button className="pl-accept" onClick={acceptImprove}>
+                  Accept
+                </button>
+              </>
+            )}
           </div>
         </>
       ) : (

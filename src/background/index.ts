@@ -1,4 +1,4 @@
-import { cloudImprove } from './cloud';
+import { improveWithBestProvider } from './providers';
 import { getSettings } from '../shared/storage';
 import type { BgRequest, BgResponse, TabMessage } from '../shared/messages';
 
@@ -8,18 +8,21 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.runtime.onMessage.addListener(
   (msg: BgRequest, _sender, sendResponse: (r: BgResponse) => void) => {
+    if (msg.type === 'OPEN_OPTIONS') {
+      void chrome.runtime.openOptionsPage();
+      return;
+    }
     if (msg.type !== 'CLOUD_IMPROVE_REQUEST') return;
     void (async () => {
       try {
         const settings = await getSettings();
-        if (!settings.cloudEnabled) throw new Error('Cloud optimization is disabled');
-        const improved = await cloudImprove(msg.prompt, settings);
+        const improved = await improveWithBestProvider(msg.prompt, settings);
         sendResponse({ type: 'CLOUD_IMPROVE_RESULT', ok: true, improved });
       } catch (e) {
         sendResponse({
           type: 'CLOUD_IMPROVE_RESULT',
           ok: false,
-          error: e instanceof Error ? e.message : 'Cloud rewrite failed',
+          error: e instanceof Error ? e.message : 'AI rewrite failed',
         });
       }
     })();

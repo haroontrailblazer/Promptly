@@ -1,15 +1,18 @@
 import { create } from 'zustand';
 import type { AnalysisResult, Settings } from '../shared/types';
 import { DEFAULT_SETTINGS } from '../shared/types';
-import type { BgRequest, BgResponse } from '../shared/messages';
-import { improveLocally } from '../improver/local';
+import { NO_PROVIDER, type BgRequest, type BgResponse } from '../shared/messages';
+import { improveSmart } from '../improver/smart';
 import { getEditorText, setEditorText } from '../content/editor';
 
 export interface ImproveState {
   status: 'idle' | 'ready' | 'loading' | 'error';
   text?: string;
   error?: string;
+  note?: string;
 }
+
+const NO_AI_NOTE = 'Built-in rewrite. Add an API key or enable Ollama (⋯) for AI rewrites.';
 
 interface OverlayState {
   editor: HTMLElement | null;
@@ -51,22 +54,30 @@ export const useOverlayStore = create<OverlayState>((set, get) => ({
     if (!editor || !analysis) return;
     const epoch = ++improveEpoch;
     const prompt = getEditorText(editor);
-    const local = improveLocally(prompt, analysis);
-    set({ improve: { status: settings.cloudEnabled ? 'loading' : 'ready', text: local } });
-    if (!settings.cloudEnabled) return;
+    const local = await improveSmart(prompt, analysis);
+    if (epoch !== improveEpoch) return;
+    const wantsAi = settings.cloudEnabled || settings.ollamaEnabled;
+    set({
+      improve: wantsAi
+        ? { status: 'loading', text: local }
+        : { status: 'ready', text: local, note: NO_AI_NOTE },
+    });
+    if (!wantsAi) return;
     try {
       const req: BgRequest = { type: 'CLOUD_IMPROVE_REQUEST', prompt };
       const res = (await chrome.runtime.sendMessage(req)) as BgResponse;
       if (epoch !== improveEpoch) return;
       if (res.ok) set({ improve: { status: 'ready', text: res.improved } });
-      else set({ improve: { status: 'error', text: local, error: res.error } });
+      else if (res.error === NO_PROVIDER) {
+        set({ improve: { status: 'ready', text: local, note: NO_AI_NOTE } });
+      } else set({ improve: { status: 'error', text: local, error: res.error } });
     } catch {
       if (epoch !== improveEpoch) return;
       set({
         improve: {
           status: 'error',
           text: local,
-          error: 'Cloud rewrite unavailable — showing local improvement.',
+          error: 'AI rewrite unavailable — showing the built-in improvement.',
         },
       });
     }

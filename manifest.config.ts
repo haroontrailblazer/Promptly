@@ -8,6 +8,7 @@ export default defineManifest((env) => ({
   description: 'Grammarly for AI prompts — analyze and improve prompts before you send them.',
   icons: { 16: 'icons/16.png', 32: 'icons/32.png', 48: 'icons/48.png', 128: 'icons/128.png' },
   action: { default_popup: 'src/popup/index.html' },
+  options_ui: { page: 'src/popup/index.html', open_in_tab: true },
   background: { service_worker: 'src/background/index.ts', type: 'module' },
   content_scripts: [
     {
@@ -17,7 +18,11 @@ export default defineManifest((env) => ({
     },
   ],
   permissions: ['storage', 'activeTab'],
-  optional_host_permissions: ['https://api.anthropic.com/*'],
+  optional_host_permissions: [
+    'https://api.anthropic.com/*',
+    'https://api.openai.com/*',
+    'http://localhost/*',
+  ],
   commands: {
     'toggle-card': {
       suggested_key: { default: 'Ctrl+Shift+P' },

@@ -34,9 +34,18 @@ export interface Settings {
   enabled: boolean;
   disabledSites: string[];
   theme: 'system' | 'light' | 'dark';
+  /** Master switch for REMOTE providers (Anthropic/OpenAI). Ollama is local. */
   cloudEnabled: boolean;
+  /** Anthropic API key. Network use only in the background worker. */
   apiKey?: string;
+  /** OpenAI API key. Network use only in the background worker. */
+  openaiKey?: string;
+  /** Use a locally running Ollama (localhost:11434) — no key, nothing leaves the machine. */
+  ollamaEnabled: boolean;
+  /** Specific Ollama model; when unset the first installed model is used. */
+  ollamaModel?: string;
   model: string;
+  openaiModel: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -44,5 +53,7 @@ export const DEFAULT_SETTINGS: Settings = {
   disabledSites: [],
   theme: 'system',
   cloudEnabled: false,
+  ollamaEnabled: false,
   model: 'claude-sonnet-5',
+  openaiModel: 'gpt-4o-mini',
 };

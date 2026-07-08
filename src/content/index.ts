@@ -21,11 +21,12 @@ const guard = <T extends (...args: never[]) => void>(fn: T): T =>
     }
   }) as T;
 
-// The content script never talks to the network — keep the API key out of
+// The content script never talks to the network — keep API keys out of
 // third-party page processes entirely.
 const sanitizeSettings = (s: Settings): Settings => {
   const clean = { ...s };
   delete clean.apiKey;
+  delete clean.openaiKey;
   return clean;
 };
 

@@ -26,7 +26,7 @@ test('badge appears with a low score for a weak prompt (textarea)', async () => 
   await page.goto('http://localhost:4173/textarea.html');
   await typePrompt(page, '#chat', 'make website');
   await expect(page.locator('.pl-badge')).toBeVisible({ timeout: 5000 });
-  await expect(page.locator('.pl-badge')).toHaveText('P');
+  await expect(page.locator('.pl-badge svg')).toHaveCount(1); // the P mark
   expect(Number(await page.locator('.pl-score').textContent())).toBeLessThan(50);
   await page.close();
 });

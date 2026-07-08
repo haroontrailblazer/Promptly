@@ -1,6 +1,6 @@
 import type { Settings } from '../shared/types';
 
-const SYSTEM_PROMPT =
+export const SYSTEM_PROMPT =
   'You improve prompts that users are about to send to an AI model. Rewrite the ' +
   "user's prompt to be clear, complete, specific, and well structured. Preserve the " +
   "user's intent, facts, and language. Add structure (role, context, constraints, " +

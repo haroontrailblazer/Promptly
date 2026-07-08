@@ -20,6 +20,9 @@ Perplexity (perplexity.ai), Copilot (copilot.microsoft.com).
 | 10  | Enabling cloud optimization in the popup triggers the api.anthropic.com permission prompt; denying leaves the toggle off |
 | 11  | With a valid API key, Improve updates the diff with the cloud rewrite after a moment                                     |
 | 12  | With an invalid API key, an inline error appears in the card and the local rewrite remains usable                        |
+| 13  | With an OpenAI key (no Anthropic key), Improve uses OpenAI and returns a rewrite                                         |
+| 14  | With Ollama running locally and its toggle on (no keys), Improve returns an Ollama rewrite                               |
+| 15  | The ⋯ button on the card opens the settings page in a tab                                                                |
 
 If a selector broke: fix `src/adapters/registry.ts`, re-run this checklist for
 that site only.
