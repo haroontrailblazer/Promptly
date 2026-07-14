@@ -133,17 +133,60 @@ function toNumberedSteps(prompt: string): string {
 // skill invocations ("review my code" → "/review my code").
 const COMMAND_INTENTS: [RegExp, string][] = [
   [/\b(review|check|audit)\b/i, '/review'],
-  [/\b(plan|design|architect)\b/i, '/plan'],
+  [/\b(plan|architect)\b/i, '/plan'],
   [/\b(test|tests|verify)\b/i, '/test'],
   [/\b(commit|push)\b/i, '/commit'],
 ];
-const LEADING_INTENT = /^\s*(please\s+)?(review|check|audit|plan|design|test|verify|commit)\s+/i;
+const LEADING_INTENT = /^\s*(please\s+)?(review|check|audit|plan|architect|test|verify|commit)\s+/i;
 
 function matchCommand(text: string, commands: string[]): string | null {
   for (const [re, cmd] of COMMAND_INTENTS) {
     if (commands.includes(cmd) && re.test(text)) return cmd;
   }
   return null;
+}
+
+// Pick the installed capability whose name/description best matches the
+// prompt — name-token hits weigh double so "design this page" finds a
+// "frontend-design" skill even when the description is generic.
+function bestCapability(
+  text: string,
+  caps?: { name: string; description?: string }[],
+): { name: string; description?: string } | null {
+  if (!caps?.length) return null;
+  const words = new Set(
+    text
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length > 2),
+  );
+  let best: { name: string; description?: string } | null = null;
+  let bestScore = 0;
+  let bestNameScore = 0;
+  for (const cap of caps.slice(0, 200)) {
+    let nameScore = 0;
+    let descScore = 0;
+    for (const t of cap.name.toLowerCase().split(/[^a-z0-9]+/)) {
+      if (t.length > 2 && words.has(t)) nameScore += 2;
+    }
+    if (cap.description) {
+      for (const t of new Set(cap.description.toLowerCase().split(/[^a-z0-9]+/))) {
+        if (t.length > 3 && words.has(t)) descScore += 1;
+      }
+    }
+    // A name hit is a strong signal; description-only overlap must clear a
+    // higher bar, and name hits win ties so "artifact-design" beats a skill
+    // that merely mentions "design" in prose.
+    const confident = nameScore >= 2 || nameScore + descScore >= 4;
+    if (!confident) continue;
+    const score = nameScore * 2 + descScore;
+    if (score > bestScore || (score === bestScore && nameScore > bestNameScore)) {
+      best = cap;
+      bestScore = score;
+      bestNameScore = nameScore;
+    }
+  }
+  return best;
 }
 
 // Agents execute rather than converse: no persona — concrete targets,
@@ -155,10 +198,24 @@ function improveForAgent(prompt: string, analysis: AnalysisResult): string {
 
   let core = has('steps-unstructured') ? toNumberedSteps(trimmed) : trimmed;
   if (has('clarity-vague') || has('clarity-short')) core = sharpenOpener(core, analysis.taskType);
-  const cmd = matchCommand(trimmed, platform?.commands ?? []);
-  if (cmd && !/^\s*\//.test(trimmed)) core = `${cmd} ${core.replace(LEADING_INTENT, '')}`;
+
+  // Prefer an installed skill that matches the prompt; fall back to the
+  // generic intent → command map.
+  const skill = /^\s*\//.test(trimmed) ? null : bestCapability(trimmed, platform?.skills);
+  if (skill) {
+    core = `/${skill.name} ${core}`;
+  } else {
+    const cmd = matchCommand(trimmed, platform?.commands ?? []);
+    if (cmd && !/^\s*\//.test(trimmed)) core = `${cmd} ${core.replace(LEADING_INTENT, '')}`;
+  }
 
   const out: string[] = [core];
+
+  const agentCap = bestCapability(trimmed, platform?.agents);
+  if (agentCap) {
+    const desc = agentCap.description ? ` — ${agentCap.description.slice(0, 90)}` : '';
+    out.push(`Delegate to the ${agentCap.name} subagent where it fits${desc}`);
+  }
   if (has('context-deictic') || has('agent-mentions')) {
     out.push(
       platform?.mentions?.length

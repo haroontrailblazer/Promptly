@@ -6,6 +6,12 @@
 
 export type PlatformKind = 'chat' | 'agent';
 
+/** A concrete capability (skill or subagent) discovered on the platform. */
+export interface CapabilityRef {
+  name: string;
+  description?: string;
+}
+
 export interface PlatformProfile {
   hosts: string[];
   /** Path prefix that switches the platform (e.g. claude.ai/code). */
@@ -16,6 +22,10 @@ export interface PlatformProfile {
   commands?: string[];
   /** @-mention targets the platform understands. */
   mentions?: string[];
+  /** Discovered installed skills (name + description), when the surface allows it. */
+  skills?: CapabilityRef[];
+  /** Discovered subagents that work can be delegated to. */
+  agents?: CapabilityRef[];
 }
 
 export const PLATFORMS: PlatformProfile[] = [

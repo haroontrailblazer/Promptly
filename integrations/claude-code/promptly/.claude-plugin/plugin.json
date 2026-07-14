@@ -1,0 +1,6 @@
+{
+  "name": "promptly",
+  "description": "Grammarly for AI prompts, in your terminal — scores every prompt you type and reframes weak ones around the skills and subagents you actually have installed.",
+  "version": "0.4.0",
+  "author": { "name": "Promptly" }
+}

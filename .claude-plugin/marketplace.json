@@ -1,0 +1,11 @@
+{
+  "name": "promptly",
+  "owner": { "name": "haroontrailblazer" },
+  "plugins": [
+    {
+      "name": "promptly",
+      "source": "./integrations/claude-code/promptly",
+      "description": "Grammarly for AI prompts in your terminal: scores every prompt, reframes weak ones around your installed skills and subagents, and adds a /promptly skill."
+    }
+  ]
+}

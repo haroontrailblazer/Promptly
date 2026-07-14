@@ -65,4 +65,29 @@ describe('agent-aware improver', () => {
     const out = improveLocally(prompt, analyzePrompt(prompt, CODE_AGENT));
     expect(out.match(/\/review/g)?.length).toBe(1);
   });
+
+  it('reframes around an INSTALLED skill that matches the prompt', () => {
+    const withSkills: PlatformProfile = {
+      ...CODE_AGENT,
+      skills: [
+        { name: 'frontend-design', description: 'Design elegant web pages and UI components' },
+        { name: 'deep-research', description: 'Fan-out web research with cited synthesis' },
+      ],
+      agents: [{ name: 'Explore', description: 'Read-only fan-out search across the codebase' }],
+    };
+    const prompt = 'design this page';
+    const out = improveLocally(prompt, analyzePrompt(prompt, withSkills));
+    expect(out.startsWith('/frontend-design design this page')).toBe(true);
+    expect(out).toContain('Acceptance criteria:');
+  });
+
+  it('suggests delegating to a matching installed subagent', () => {
+    const withAgents: PlatformProfile = {
+      ...CODE_AGENT,
+      agents: [{ name: 'Explore', description: 'Fan-out search to explore the codebase quickly' }],
+    };
+    const prompt = 'explore the codebase and find the auth flow';
+    const out = improveLocally(prompt, analyzePrompt(prompt, withAgents));
+    expect(out).toContain('Delegate to the Explore subagent');
+  });
 });
