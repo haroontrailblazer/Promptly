@@ -183,6 +183,22 @@ test('library: save current prompt into the personal library', async () => {
   await page.close();
 });
 
+test('panel never clips past the viewport when the input is at the top', async () => {
+  const page = await context.newPage();
+  await page.goto('http://localhost:4173/topchat.html');
+  await typePrompt(page, '#chat', 'make website');
+  await expect(page.locator('.pl-badge')).toBeVisible({ timeout: 5000 });
+  await page.locator('.pl-badge').click();
+  const card = page.locator('.pl-card');
+  await expect(card).toBeVisible();
+  const box = await card.boundingBox();
+  const viewport = page.viewportSize()!;
+  expect(box!.y).toBeGreaterThanOrEqual(0);
+  expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+  expect(box!.x).toBeGreaterThanOrEqual(0);
+  await page.close();
+});
+
 test('stays dormant on non-matched origins', async () => {
   const page = await context.newPage();
   // 127.0.0.1 is not in the e2e manifest matches (only localhost is)

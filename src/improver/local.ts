@@ -129,7 +129,56 @@ function toNumberedSteps(prompt: string): string {
   return steps.map((s, i) => `${i + 1}. ${s}`).join('\n');
 }
 
+// Map prompt intent to a platform slash-skill so simple asks become direct
+// skill invocations ("review my code" → "/review my code").
+const COMMAND_INTENTS: [RegExp, string][] = [
+  [/\b(review|check|audit)\b/i, '/review'],
+  [/\b(plan|design|architect)\b/i, '/plan'],
+  [/\b(test|tests|verify)\b/i, '/test'],
+  [/\b(commit|push)\b/i, '/commit'],
+];
+const LEADING_INTENT = /^\s*(please\s+)?(review|check|audit|plan|design|test|verify|commit)\s+/i;
+
+function matchCommand(text: string, commands: string[]): string | null {
+  for (const [re, cmd] of COMMAND_INTENTS) {
+    if (commands.includes(cmd) && re.test(text)) return cmd;
+  }
+  return null;
+}
+
+// Agents execute rather than converse: no persona — concrete targets,
+// constraints, and acceptance criteria the agent can verify itself.
+function improveForAgent(prompt: string, analysis: AnalysisResult): string {
+  const has = (id: string) => analysis.findings.some((f) => f.checkId === id);
+  const platform = analysis.platform;
+  const trimmed = prompt.trim();
+
+  let core = has('steps-unstructured') ? toNumberedSteps(trimmed) : trimmed;
+  if (has('clarity-vague') || has('clarity-short')) core = sharpenOpener(core, analysis.taskType);
+  const cmd = matchCommand(trimmed, platform?.commands ?? []);
+  if (cmd && !/^\s*\//.test(trimmed)) core = `${cmd} ${core.replace(LEADING_INTENT, '')}`;
+
+  const out: string[] = [core];
+  if (has('context-deictic') || has('agent-mentions')) {
+    out.push(
+      platform?.mentions?.length
+        ? `Target: ${platform.mentions[0]} [point at the exact files, folders, or resources]`
+        : 'Target: [name the exact files, folders, or URLs to work on]',
+    );
+  }
+  if (has('constraints-missing')) {
+    out.push('Constraints: [stack, versions, and conventions the agent must follow]');
+  }
+  if (has('success-missing') || has('agent-acceptance')) {
+    out.push(
+      'Acceptance criteria: [how the agent verifies done — tests pass, build green, feature works]',
+    );
+  }
+  return out.join('\n\n');
+}
+
 export function improveLocally(prompt: string, analysis: AnalysisResult): string {
+  if (analysis.platform?.kind === 'agent') return improveForAgent(prompt, analysis);
   const trimmed = prompt.trim();
   const has = (id: string) => analysis.findings.some((f) => f.checkId === id);
   const topic = TOPICS.find((t) => t.re.test(trimmed)) ?? null;

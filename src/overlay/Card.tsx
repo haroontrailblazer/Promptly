@@ -15,31 +15,30 @@ import type { Component } from '../shared/types';
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
 const TABS: { id: PanelTab; label: string }[] = [
-  { id: 'improve', label: '✨ Improve' },
+  { id: 'improve', label: 'Improve' },
   { id: 'refine', label: 'Refine' },
   { id: 'breakdown', label: 'Breakdown' },
   { id: 'library', label: 'Library' },
 ];
 
-const STEPS = [
-  '✨ Improving prompt…',
-  '⚡ Optimising for this site…',
-  '🧠 Looking for ambiguities…',
-  '🪄 Optimising for clarity…',
-  '🚀 Applying best practices…',
-  '🧹 Cleaning up…',
-];
-
 function ProgressSteps() {
+  const platform = useOverlayStore((s) => s.analysis?.platform);
+  const steps = [
+    'Reading your prompt',
+    `Optimising for ${platform?.name ?? 'this assistant'}`,
+    platform?.kind === 'agent' ? 'Adding targets and acceptance criteria' : 'Resolving ambiguities',
+    'Applying best practices',
+    'Polishing',
+  ];
   const [n, setN] = useState(1);
   useEffect(() => {
-    const t = window.setInterval(() => setN((v) => Math.min(v + 1, STEPS.length)), 650);
+    const t = window.setInterval(() => setN((v) => Math.min(v + 1, steps.length)), 600);
     return () => window.clearInterval(t);
-  }, []);
+  }, [steps.length]);
   return (
     <div className="pl-steps">
-      {STEPS.slice(0, n).map((s) => (
-        <div className="pl-step" key={s}>
+      {steps.slice(0, n).map((s, i) => (
+        <div className={`pl-step${i < n - 1 ? ' pl-step-done' : ''}`} key={s}>
           <span className="pl-step-dot" />
           {s}
         </div>
@@ -48,7 +47,13 @@ function ProgressSteps() {
   );
 }
 
-export function Card({ style }: { style: CSSProperties }) {
+export function Card({
+  style,
+  innerRef,
+}: {
+  style: CSSProperties;
+  innerRef?: React.Ref<HTMLDivElement>;
+}) {
   const {
     analysis,
     editor,
@@ -143,7 +148,7 @@ export function Card({ style }: { style: CSSProperties }) {
   );
 
   return (
-    <div className="pl-card" style={style}>
+    <div className="pl-card" style={style} ref={innerRef}>
       <div className="pl-panel-head" onPointerDown={onHeaderDown}>
         <div className="pl-tabs">
           {TABS.map((t) => (

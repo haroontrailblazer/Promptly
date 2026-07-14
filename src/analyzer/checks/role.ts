@@ -13,6 +13,8 @@ const ROLE_RE =
   /\b(act as|you are|you're an?|as an? (expert|senior|professional)|take the role|persona of)\b/i;
 
 export const checkRole: Check = (ctx) => {
+  // Personas help chat assistants; agents need goals and targets instead.
+  if (ctx.platform?.kind === 'agent') return [];
   if (ctx.taskType === 'general' || ROLE_RE.test(ctx.text)) return [];
   return [
     {

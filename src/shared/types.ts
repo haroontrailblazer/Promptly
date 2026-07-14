@@ -28,6 +28,8 @@ export interface AnalysisResult {
   findings: Finding[];
   score: ScoreResult;
   taskType: TaskType;
+  /** Where the prompt is being written — drives chat vs. agent optimization. */
+  platform?: import('../adapters/platforms').PlatformProfile;
 }
 
 export interface LibraryPrompt {

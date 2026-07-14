@@ -5,6 +5,7 @@ export interface CheckContext {
   allWords: string[];
   meaningful: string[];
   taskType: TaskType;
+  platform?: import('../adapters/platforms').PlatformProfile;
 }
 
 const STOPWORDS = new Set([

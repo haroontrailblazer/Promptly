@@ -1,7 +1,7 @@
 import type { Check } from './clarity';
 import { ARTIFACT_RE } from './outputFormat';
 
-const MEASURABLE =
+export const MEASURABLE =
   /\b(\d+\s*(words?|items?|steps?|examples?|points?|sentences?|paragraphs?|sources?)|at least|at most|no more than|must (include|contain|have|be)|should (include|contain)|criteria|checklist)\b/i;
 
 export const checkSuccessCriteria: Check = (ctx) => {

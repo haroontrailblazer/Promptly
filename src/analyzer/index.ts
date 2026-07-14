@@ -12,6 +12,8 @@ import { checkSuccessCriteria } from './checks/successCriteria';
 import { checkRole } from './checks/role';
 import { checkToolReadiness } from './checks/toolReadiness';
 import { checkMultiStep } from './checks/multiStep';
+import { checkAgentReadiness } from './checks/agentReadiness';
+import type { PlatformProfile } from '../adapters/platforms';
 
 const CHECKS: Check[] = [
   checkClarity,
@@ -24,11 +26,12 @@ const CHECKS: Check[] = [
   checkRole,
   checkToolReadiness,
   checkMultiStep,
+  checkAgentReadiness,
 ];
 
 const MAX_ANALYZE = 20_000;
 
-export function analyzePrompt(raw: string): AnalysisResult {
+export function analyzePrompt(raw: string, platform?: PlatformProfile): AnalysisResult {
   const text = raw.length > MAX_ANALYZE ? `${raw.slice(0, 15_000)}\n${raw.slice(-5_000)}` : raw;
   const taskType = detectTaskType(text);
   const ctx: CheckContext = {
@@ -36,7 +39,8 @@ export function analyzePrompt(raw: string): AnalysisResult {
     allWords: words(text),
     meaningful: meaningfulWords(text),
     taskType,
+    platform,
   };
   const findings = CHECKS.flatMap((check) => check(ctx));
-  return { findings, score: scorePrompt(findings, ctx.meaningful.length), taskType };
+  return { findings, score: scorePrompt(findings, ctx.meaningful.length), taskType, platform };
 }

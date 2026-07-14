@@ -1,5 +1,6 @@
 import { analyzePrompt } from '../analyzer';
 import { findEditor } from '../adapters';
+import { resolvePlatform } from '../adapters/platforms';
 import { getEditorText } from './editor';
 import { getSettings, onSettingsChanged } from '../shared/storage';
 import { throttle } from '../shared/throttle';
@@ -62,7 +63,9 @@ async function main(): Promise<void> {
         st.setAnalysis(null);
         return;
       }
-      st.setAnalysis(analyzePrompt(text));
+      // Resolved per run: SPA navigation can switch chat ↔ agent surfaces
+      // (e.g. claude.ai ↔ claude.ai/code) without a page load.
+      st.setAnalysis(analyzePrompt(text, resolvePlatform(location.hostname, location.pathname)));
       st.setAnchor(editor.getBoundingClientRect());
     } catch {
       /* never break the host page */

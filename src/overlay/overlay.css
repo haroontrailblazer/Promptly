@@ -151,7 +151,9 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin: 0 -16px 12px;
+  padding: 0 12px 10px;
+  border-bottom: 1px solid var(--pl-edge);
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -400,7 +402,9 @@
   padding: 12px;
   max-height: 34vh;
   overflow-y: auto;
-  font-size: 12.5px;
+  font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
   margin-top: 8px;
 }
 .pl-diff ins {
@@ -423,17 +427,36 @@
 .pl-step {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 12.5px;
-  margin: 7px 0;
+  margin: 8px 0;
   animation: pl-in 0.25s ease;
 }
 .pl-step-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--pl-good);
+  background: var(--pl-fg);
   flex: none;
+  animation: pl-pulse 1s ease infinite;
+}
+.pl-step-done {
+  color: var(--pl-muted);
+}
+.pl-step-done .pl-step-dot {
+  background: var(--pl-good);
+  animation: none;
+}
+@keyframes pl-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
 }
 
 .pl-lib-bar {
@@ -550,4 +573,12 @@
   color: var(--pl-muted);
   font-size: 12px;
   padding: 8px 0;
+}
+
+/* Keyboard accessibility: a visible ring on every interactive element. */
+.pl-layer button:focus-visible,
+.pl-layer input:focus-visible,
+.pl-layer textarea:focus-visible {
+  outline: 2px solid var(--pl-fg);
+  outline-offset: 1px;
 }
