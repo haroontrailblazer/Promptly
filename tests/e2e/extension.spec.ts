@@ -9,6 +9,7 @@ test.beforeAll(async () => {
     channel: 'chromium',
     args: [`--disable-extensions-except=${dist}`, `--load-extension=${dist}`],
   });
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 });
 
 test.afterAll(async () => context.close());
@@ -58,6 +59,8 @@ test('card opens with suggestions; Accept replaces textarea text', async () => {
   await expect(page.locator('.pl-suggestion').first()).toBeVisible();
   await page.locator('.pl-improve-btn').click();
   await expect(page.locator('.pl-diff')).toBeVisible();
+  await page.locator('.pl-copy').click();
+  await expect(page.locator('.pl-copy')).toHaveText('Copied ✓'); // visible feedback, not a silent maybe
   await page.locator('.pl-accept').click();
   await expect(page.locator('#chat')).toHaveValue(/Act as a senior front-end engineer/);
   await page.close();

@@ -69,6 +69,15 @@ export function Card({
     dismissImprove,
   } = useOverlayStore();
   const [instruction, setInstruction] = useState('');
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
+
+  const copyImproved = () => {
+    navigator.clipboard
+      .writeText(improve.text ?? '')
+      .then(() => setCopyState('copied'))
+      .catch(() => setCopyState('failed'));
+    window.setTimeout(() => setCopyState('idle'), 1600);
+  };
 
   const original = editor ? getEditorText(editor) : '';
   const hasResult = improve.status !== 'idle' && improve.text !== undefined;
@@ -129,13 +138,12 @@ export function Card({
           </button>
           {!unchanged && (
             <>
-              <button
-                className="pl-copy"
-                onClick={() =>
-                  void navigator.clipboard.writeText(improve.text ?? '').catch(() => {})
-                }
-              >
-                Copy
+              <button className="pl-copy" onClick={copyImproved}>
+                {copyState === 'copied'
+                  ? 'Copied ✓'
+                  : copyState === 'failed'
+                    ? 'Copy failed'
+                    : 'Copy'}
               </button>
               <button className="pl-accept" onClick={acceptImprove}>
                 Accept
