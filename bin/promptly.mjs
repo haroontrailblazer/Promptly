@@ -21224,6 +21224,10 @@ function resolvePlatform(hostname, pathname) {
 	return matches.find((p) => p.pathPrefix && pathname.startsWith(p.pathPrefix)) ?? matches.find((p) => !p.pathPrefix) ?? GENERIC;
 }
 //#endregion
+//#region src/shared/messages.ts
+/** Sentinel error: no AI provider is configured — caller falls back to the built-in rewriter. */
+var NO_PROVIDER = "NO_PROVIDER";
+//#endregion
 //#region src/background/cloud.ts
 var SYSTEM_PROMPT = "You improve prompts that users are about to send to an AI model. Rewrite the user's prompt to be clear, complete, specific, and well structured. Preserve the user's intent, facts, and language. Add structure (role, context, constraints, output format, numbered steps) only where it helps. Do not answer the prompt. Return ONLY the rewritten prompt text, with no preamble or explanation.";
 function buildSystemPrompt(instruction) {
@@ -21315,6 +21319,18 @@ async function ollamaImprove(prompt, settings, instruction) {
 	const text = (await res.json()).message?.content?.trim();
 	if (!text) throw new Error("Empty response from Ollama");
 	return text;
+}
+/**
+* Provider priority: Anthropic key → OpenAI key → local Ollama.
+* Remote providers additionally require the cloudEnabled opt-in; Ollama only
+* its own toggle (localhost — nothing leaves the machine).
+* Throws NO_PROVIDER when nothing is configured.
+*/
+async function improveWithBestProvider(prompt, settings, instruction) {
+	if (settings.cloudEnabled && settings.apiKey) return cloudImprove(prompt, settings, instruction);
+	if (settings.cloudEnabled && settings.openaiKey) return openaiImprove(prompt, settings, instruction);
+	if (settings.ollamaEnabled) return ollamaImprove(prompt, settings, instruction);
+	throw new Error(NO_PROVIDER);
 }
 //#endregion
 //#region src/cli/discover.ts
@@ -56075,13 +56091,12 @@ function envSettings() {
 	};
 }
 async function improve(text, opts = {}) {
-	const local = await improveSmart(text, analyze(text, opts));
+	const profile = profileFor(opts);
+	const local = await improveSmart(text, analyzePrompt(text, profile));
 	if (opts.local) return local;
-	const s = envSettings();
+	const instruction = profile?.kind === "agent" ? `The prompt targets an autonomous coding agent (${profile.name}). Do not add personas; include concrete targets, constraints, and acceptance criteria the agent can verify itself.` : void 0;
 	try {
-		if (s.apiKey) return await cloudImprove(text, s);
-		if (s.openaiKey) return await openaiImprove(text, s);
-		if (s.ollamaEnabled) return await ollamaImprove(text, s);
+		return await improveWithBestProvider(text, envSettings(), instruction);
 	} catch {}
 	return local;
 }
@@ -56114,6 +56129,10 @@ function parse(argv) {
 		words: argv.filter((a, i) => !a.startsWith("--") && argv[i - 1] !== "--platform")
 	};
 }
+function fail(message) {
+	console.error(message);
+	process.exitCode = 1;
+}
 function band(score) {
 	return score >= 80 ? "Strong" : score >= 50 ? "Okay" : "Weak";
 }
@@ -56124,15 +56143,16 @@ function printScore(a) {
 }
 function winClipboard(read, text) {
 	if (process.platform !== "win32") throw new Error("clip mode is Windows-only for now");
+	const utf8 = "[Console]::InputEncoding=[Console]::OutputEncoding=[Text.Encoding]::UTF8;";
 	if (read) return (spawnSync("powershell", [
 		"-noprofile",
 		"-command",
-		"Get-Clipboard -Raw"
+		`${utf8} Get-Clipboard -Raw`
 	], { encoding: "utf8" }).stdout ?? "").trim();
 	spawnSync("powershell", [
 		"-noprofile",
 		"-command",
-		"$input | Set-Clipboard"
+		`${utf8} $input | Set-Clipboard`
 	], {
 		input: text ?? "",
 		encoding: "utf8"
@@ -56183,14 +56203,14 @@ async function main() {
 	const text = flags.has("--stdin") || words.length === 0 && !process.stdin.isTTY ? readStdin().trim() : words.join(" ");
 	switch (cmd) {
 		case "score": {
-			if (!text) return void console.error("No prompt given. Try: promptly score \"make website\"");
+			if (!text) return fail("No prompt given. Try: promptly score \"make website\"");
 			const a = analyze(text, opts);
 			if (flags.has("--json")) console.log(JSON.stringify(a, null, 2));
 			else printScore(a);
 			return;
 		}
 		case "improve": {
-			if (!text) return void console.error("No prompt given. Try: promptly improve \"make website\"");
+			if (!text) return fail("No prompt given. Try: promptly improve \"make website\"");
 			const improved = await improve(text, opts);
 			if (flags.has("--json")) {
 				const a = analyze(text, opts);
@@ -56203,7 +56223,7 @@ async function main() {
 		}
 		case "clip": {
 			const current = winClipboard(true);
-			if (!current) return void console.error("Clipboard is empty.");
+			if (!current) return fail("Clipboard is empty.");
 			winClipboard(false, await improve(current, opts));
 			console.log("Clipboard rewritten - paste anywhere.");
 			return;

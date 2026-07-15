@@ -7,8 +7,7 @@ import { analyzePrompt } from '../analyzer';
 import { improveSmart } from '../improver/smart';
 import { improveLocally } from '../improver/local';
 import { resolvePlatform, type PlatformProfile } from '../adapters/platforms';
-import { cloudImprove } from '../background/cloud';
-import { ollamaImprove, openaiImprove } from '../background/providers';
+import { improveWithBestProvider } from '../background/providers';
 import { discoverClaudeCapabilities } from './discover';
 import { DEFAULT_SETTINGS, type AnalysisResult, type Settings } from '../shared/types';
 
@@ -62,16 +61,20 @@ function envSettings(): Settings {
 }
 
 export async function improve(text: string, opts: EngineOptions = {}): Promise<string> {
-  const analysis = analyze(text, opts);
+  const profile = profileFor(opts);
+  const analysis = analyzePrompt(text, profile);
   const local = await improveSmart(text, analysis);
   if (opts.local) return local;
-  const s = envSettings();
+  // Providers must know they're rewriting for an agent, or they hand back a
+  // chat-style persona rewrite that contradicts the local scaffold.
+  const instruction =
+    profile?.kind === 'agent'
+      ? `The prompt targets an autonomous coding agent (${profile.name}). Do not add personas; include concrete targets, constraints, and acceptance criteria the agent can verify itself.`
+      : undefined;
   try {
-    if (s.apiKey) return await cloudImprove(text, s);
-    if (s.openaiKey) return await openaiImprove(text, s);
-    if (s.ollamaEnabled) return await ollamaImprove(text, s);
+    return await improveWithBestProvider(text, envSettings(), instruction);
   } catch {
-    /* provider failed - the local rewrite below is always available */
+    /* no provider configured or provider failed - local is always available */
   }
   return local;
 }
@@ -110,6 +113,11 @@ function parse(argv: string[]) {
   return { flags, kv, words };
 }
 
+function fail(message: string): void {
+  console.error(message);
+  process.exitCode = 1;
+}
+
 function band(score: number): string {
   return score >= 80 ? 'Strong' : score >= 50 ? 'Okay' : 'Weak';
 }
@@ -124,13 +132,17 @@ function winClipboard(read: true): string;
 function winClipboard(read: false, text?: string): string;
 function winClipboard(read: boolean, text?: string): string {
   if (process.platform !== 'win32') throw new Error('clip mode is Windows-only for now');
+  // PowerShell 5.1 defaults to ANSI on both pipe directions - force UTF-8 or
+  // any rewrite containing typographic punctuation reaches the clipboard as
+  // mojibake.
+  const utf8 = '[Console]::InputEncoding=[Console]::OutputEncoding=[Text.Encoding]::UTF8;';
   if (read) {
-    const r = spawnSync('powershell', ['-noprofile', '-command', 'Get-Clipboard -Raw'], {
+    const r = spawnSync('powershell', ['-noprofile', '-command', `${utf8} Get-Clipboard -Raw`], {
       encoding: 'utf8',
     });
     return (r.stdout ?? '').trim();
   }
-  spawnSync('powershell', ['-noprofile', '-command', '$input | Set-Clipboard'], {
+  spawnSync('powershell', ['-noprofile', '-command', `${utf8} $input | Set-Clipboard`], {
     input: text ?? '',
     encoding: 'utf8',
   });
@@ -181,14 +193,14 @@ async function main(): Promise<void> {
 
   switch (cmd) {
     case 'score': {
-      if (!text) return void console.error('No prompt given. Try: promptly score "make website"');
+      if (!text) return fail('No prompt given. Try: promptly score "make website"');
       const a = analyze(text, opts);
       if (flags.has('--json')) console.log(JSON.stringify(a, null, 2));
       else printScore(a);
       return;
     }
     case 'improve': {
-      if (!text) return void console.error('No prompt given. Try: promptly improve "make website"');
+      if (!text) return fail('No prompt given. Try: promptly improve "make website"');
       const improved = await improve(text, opts);
       if (flags.has('--json')) {
         const a = analyze(text, opts);
@@ -198,7 +210,7 @@ async function main(): Promise<void> {
     }
     case 'clip': {
       const current = winClipboard(true);
-      if (!current) return void console.error('Clipboard is empty.');
+      if (!current) return fail('Clipboard is empty.');
       const improved = await improve(current, opts);
       winClipboard(false, improved);
       console.log('Clipboard rewritten - paste anywhere.');

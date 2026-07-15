@@ -8,10 +8,10 @@ const BIN = 'bin/promptly.mjs';
 const built = existsSync(BIN);
 
 describe.skipIf(!built)('promptly CLI', () => {
-  it('errors fast on empty piped stdin instead of hanging', () => {
+  it('errors fast on empty piped stdin, with a failing exit code', () => {
     const r = spawnSync('node', [BIN, 'improve'], { input: '', encoding: 'utf8', timeout: 15000 });
     expect(r.stderr).toContain('No prompt given');
-    expect(r.status).toBe(0);
+    expect(r.status).toBe(1); // scripts must be able to detect misuse
   });
 
   it('scores a piped prompt', () => {
