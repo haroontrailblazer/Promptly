@@ -56180,7 +56180,7 @@ async function main() {
 		platform: kv.get("--platform"),
 		local: flags.has("--local")
 	};
-	const text = flags.has("--stdin") || words.length === 0 ? readStdin().trim() : words.join(" ");
+	const text = flags.has("--stdin") || words.length === 0 && !process.stdin.isTTY ? readStdin().trim() : words.join(" ");
 	switch (cmd) {
 		case "score": {
 			if (!text) return void console.error("No prompt given. Try: promptly score \"make website\"");

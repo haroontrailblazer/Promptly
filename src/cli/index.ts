@@ -174,7 +174,10 @@ async function main(): Promise<void> {
     platform: kv.get('--platform'),
     local: flags.has('--local'),
   };
-  const text = flags.has('--stdin') || words.length === 0 ? readStdin().trim() : words.join(' ');
+  // Read stdin only when asked for or actually piped — reading a TTY would
+  // block forever on an interactive `promptly improve` with no text.
+  const wantStdin = flags.has('--stdin') || (words.length === 0 && !process.stdin.isTTY);
+  const text = wantStdin ? readStdin().trim() : words.join(' ');
 
   switch (cmd) {
     case 'score': {
